@@ -56,10 +56,6 @@ public class ViewHelper {
         }
     }
 
-    public int getMaxScreenSize(){
-        return Math.max(screenHeight, screenWidth);
-    }
-
 //    public void releaseImageViewResource(ImageView imageView) {
 //        if (imageView == null) return;
 //        Drawable drawable = imageView.getDrawable();
