@@ -14,8 +14,11 @@ import java.util.List;
 
 public class Page extends File{
 
+
     private Bitmap bitmap;
     private boolean cannotLoadBitmap = false;
+    private boolean isFirstPage = false;
+    private boolean isTheLastPage = false;
 
     public Page(String url){
         super(url);
@@ -82,4 +85,19 @@ public class Page extends File{
         this.bitmap = bitmap;
     }
 
+    public boolean isFirstPage() {
+        return isFirstPage;
+    }
+
+    public void setFirstPage(boolean firstPage) {
+        isFirstPage = firstPage;
+    }
+
+    public boolean isTheLastPage() {
+        return isTheLastPage;
+    }
+
+    public void setTheLastPage(boolean theLastPage) {
+        isTheLastPage = theLastPage;
+    }
 }

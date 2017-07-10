@@ -36,34 +36,29 @@ public class Book extends File{
         super(rootPath);
     }
 
-    protected Object[] getSiblingPage(Page page, int direction){
-        boolean isLoadFromAnotherChapter = false;
-        Page returnPage = null;
+    protected Page getSiblingPage(Page page, int direction){
         File file = page;
         while(file != null && !Objects.equals(file.getUrl(), this.url)){
             File sibling = file.getSibling(direction >= 0 ? 1 : -1 );
             if(sibling == null){
-                isLoadFromAnotherChapter = true;
                 file = file.getParent();
             }
             else {
                 Page p = direction >= 0 ? sibling.getFirstPage() : sibling.getTheLastPage();
-                if(p != null){
-                    returnPage = p;
-                    break;
-                }
+                if(p != null)
+                    return p;
                 else
                     file = sibling;
             }
         }
-        return new Object[]{returnPage, isLoadFromAnotherChapter};
+        return null;
     }
 
-    public Object[] getNextPage(Page page){
+    public Page getNextPage(Page page){
         return this.getSiblingPage(page, 1);
     }
 
-    public Object[] getLastPage(Page page){
+    public Page getLastPage(Page page){
         return this.getSiblingPage(page, -1);
     }
 

@@ -94,9 +94,14 @@ public class File implements Serializable{
         Arrays.sort(dirs);
 
         File[] result = new File[dirs.length + files.length];
-        for(int i = 0; i < files.length; i++)
+        int i;
+        for(i = 0; i < files.length; i++)
             result[i] = new Page(files[i]);
-        for(int i = 0; i < dirs.length; i++){
+        if(files.length > 0){
+            ((Page)result[0]).setFirstPage(true);
+            ((Page)result[files.length - 1]).setTheLastPage(true);
+        }
+        for(i = 0; i < dirs.length; i++){
             result[i + files.length] = new File(dirs[i]);
         }
         List<File> cs = Arrays.asList(result);
@@ -184,11 +189,14 @@ public class File implements Serializable{
         Visitor visitor = new Visitor() {
 
             Page page;
-
             @Override
             public boolean visit(File file) {
                 if(file instanceof Page && file.isValid()) {
                     page = (Page)file;
+                    if(reversed)
+                        page.setTheLastPage(true);
+                    else
+                        page.setFirstPage(true);
                     return false;
                 }
                 return true;
@@ -198,7 +206,6 @@ public class File implements Serializable{
             public Object getResult() {
                 return page;
             }
-
         };
         this.preOrderTraverseFile(visitor, reversed);
         return (Page)visitor.getResult();

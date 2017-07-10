@@ -22,8 +22,6 @@ import java.util.Objects;
 public class ViewComicsActivity extends AppCompatActivity {
 
     private static final String TAG = "ViewComicsActivity";
-    Book book;
-    Page startPage;
     RecyclerView pagesView;
     PagesViewAdapter pagesViewAdapter;
 
@@ -36,7 +34,6 @@ public class ViewComicsActivity extends AppCompatActivity {
         setContentView(R.layout.activity_view_comics);
 
         ViewHelper.INSTANCE.init(this);
-
 
         loadViews();
 
@@ -59,6 +56,8 @@ public class ViewComicsActivity extends AppCompatActivity {
             return;
         String action = intent.getAction();
 
+        Book book;
+        Page startPage;
         if(Intent.ACTION_VIEW.equals(action)){
             String file =  ViewHelper.INSTANCE.getPath(intent.getData());
             book = Book.getBookByImageURL(file);

@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 
 import com.chdc.comicsreader.R;
 import com.chdc.comicsreader.ViewHelper;
@@ -91,7 +92,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
             switch (direction){
                 case LAST:
                     PageHolder next = (PageHolder) this.owner.findViewHolderForLayoutPosition(position + 1);
-                    page = (Page)book.getLastPage(next.getPage())[0];
+                    page = book.getLastPage(next.getPage());
                     if(page == null){
                         // 更新移动缓存中的键
                         if(!isLockedForChangeFrontEnd) {
@@ -116,7 +117,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                     break;
                 case NEXT:
                     PageHolder last = (PageHolder) this.owner.findViewHolderForLayoutPosition(position - 1);
-                    page = (Page)book.getNextPage(last.getPage())[0];
+                    page = book.getNextPage(last.getPage());
                     if(page == null){
                         if(!isLockedForChangeBackEnd) {
                             isLockedForChangeBackEnd = true;
@@ -169,7 +170,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
 
     void setBlankHolder(PageHolder holder){
         holder.setPage(null);
-        holder.setBitmap(BitmapFactory.decodeResource(this.context.getResources(), R.drawable.blank_picture));
+        holder.setBitmap(ViewHelper.INSTANCE.getBlankPicture());
     }
 
     public void offsetAllKeysInCache(int offset) throws Exception {
@@ -213,8 +214,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                 page = cp;
             }
             else{
-                Object[] result = direction == Direction.NEXT ? book.getNextPage(page) : book.getLastPage(page);
-                page = (Page)result[0];
+                page = direction == Direction.NEXT ? book.getNextPage(page) : book.getLastPage(page);
                 if(page == null)
                     break;
                 if(pageCache.get(position) == null)
