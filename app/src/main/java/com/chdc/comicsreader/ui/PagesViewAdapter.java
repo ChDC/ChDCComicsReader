@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.Toast;
 
 import com.chdc.comicsreader.R;
 import com.chdc.comicsreader.ViewHelper;
@@ -38,8 +37,8 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     SparseArray<Page> pageCache;
     int cachePageNumber = 2; // 缓存两个图片
     boolean isStartPageLoaded = false;
-    boolean isTheLastPageLoaded = false;
-    boolean isFirstPageLoaded = false;
+    boolean isLockedForChangeBackEnd = false;
+    boolean isLockedForChangeFrontEnd = false;
 
     // 元素数量
     private int itemCount = 0;
@@ -94,24 +93,22 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                     PageHolder next = (PageHolder) this.owner.findViewHolderForLayoutPosition(position + 1);
                     page = (Page)book.getLastPage(next.getPage())[0];
                     if(page == null){
-                        if(isFirstPageLoaded){
-                            setBlankHolder(holder);
-                            return;
-                        }
-                        isFirstPageLoaded = true;
-                        int offset = - position - 1;
                         // 更新移动缓存中的键
-                        new Handler().post(() -> {
-                            try {
-                                offsetAllKeysInCache(offset);
-                                this.itemCount += offset;
-//                                newViewPosition += offset;
-                                this.notifyDataSetChanged();
-                                this.owner.scrollToPosition(0);
-                            } catch (Exception e1) {
-                                e1.printStackTrace();
-                            }
-                        });
+                        if(!isLockedForChangeFrontEnd) {
+                            isLockedForChangeFrontEnd = true;
+                            int offset = - position - 1;
+                            new Handler().post(() -> {
+                                try {
+                                    offsetAllKeysInCache(offset);
+                                    this.itemCount += offset;
+                                    this.notifyDataSetChanged();
+                                    this.owner.scrollToPosition(0);
+                                    isLockedForChangeFrontEnd = false;
+                                } catch (Exception e1) {
+                                    e1.printStackTrace();
+                                }
+                            });
+                        }
                         setBlankHolder(holder);
                         Log.d(TAG, "前面没有了");
                         return;
@@ -121,12 +118,13 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                     PageHolder last = (PageHolder) this.owner.findViewHolderForLayoutPosition(position - 1);
                     page = (Page)book.getNextPage(last.getPage())[0];
                     if(page == null){
-                        if(!isTheLastPageLoaded) {
-                            isTheLastPageLoaded = true;
+                        if(!isLockedForChangeBackEnd) {
+                            isLockedForChangeBackEnd = true;
                             new Handler().post(() -> {
                                 try {
                                     this.itemCount = position;
                                     this.notifyDataSetChanged();
+                                    isLockedForChangeBackEnd = false;
                                 } catch (Exception e1) {
                                     e1.printStackTrace();
                                 }
@@ -258,8 +256,8 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     public void clear(){
         clearCache();
         isStartPageLoaded = false;
-        isTheLastPageLoaded = false;
-        isFirstPageLoaded = false;
+        isLockedForChangeBackEnd = false;
+        isLockedForChangeFrontEnd = false;
         setItemCount(0);
     }
 
@@ -377,7 +375,6 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
 
         public void setBitmap(Bitmap bitmap){
             if(bitmap == null || bitmap.isRecycled()){
-                // TODO: 添加错误图片
                 imageView.setImageBitmap(ViewHelper.INSTANCE.getErrorPicture());
                 return;
             }
