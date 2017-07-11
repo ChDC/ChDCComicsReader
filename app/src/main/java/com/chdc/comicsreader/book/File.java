@@ -6,6 +6,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 /**
  * Created by Wen on 2017/7/6.
@@ -13,7 +14,7 @@ import java.util.Objects;
 
 public class File implements Serializable{
 
-    public static final String IMAGE_FILE_PATTERN = ".*\\.(jpg|png|bmp|jpeg|gif)$";
+    public static final Pattern IMAGE_FILE_PATTERN = Pattern.compile(".*\\.(jpg|png|bmp|jpeg|gif)$", Pattern.CASE_INSENSITIVE);
 
     protected File parent;
     protected List<File> children;
@@ -90,19 +91,27 @@ public class File implements Serializable{
         FileImplement fileImplement = this.getFileImplement();
         String[] files = fileImplement.getFiles(url, IMAGE_FILE_PATTERN);
         String[] dirs = fileImplement.getDirectories(url);
-        Arrays.sort(files);
-        Arrays.sort(dirs);
+        // TODO: 汉语排序，如汉语中的 章节一，章节二，
+        // TODO: 数字序号排序，如 001 排在 02 前面
+        Arrays.sort(files, String.CASE_INSENSITIVE_ORDER);
+        Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
 
         File[] result = new File[dirs.length + files.length];
         int i;
-        for(i = 0; i < files.length; i++)
-            result[i] = new Page(files[i]);
+        for(i = 0; i < files.length; i++) {
+            Page page = new Page(files[i]);
+            page.parent = this;
+            page.setPageType(Page.PageType.NotEnd);
+            result[i] = page;
+        }
         if(files.length > 0){
-            ((Page)result[0]).setFirstPage(true);
-            ((Page)result[files.length - 1]).setTheLastPage(true);
+            ((Page)result[files.length - 1]).setPageType(Page.PageType.TailEnd);
+            ((Page)result[0]).setPageType(Page.PageType.HeadEnd);
         }
         for(i = 0; i < dirs.length; i++){
-            result[i + files.length] = new File(dirs[i]);
+            File file = new File(dirs[i]);
+            file.parent = this;
+            result[i + files.length] = file;
         }
         List<File> cs = Arrays.asList(result);
         if(cacheChildren)
@@ -170,7 +179,7 @@ public class File implements Serializable{
      * 获取第一页
      * @return
      */
-    public Page getFirstPage(){
+    public Page getHeadEndPage(){
         return this.getEndPage(false);
     }
 
@@ -178,7 +187,7 @@ public class File implements Serializable{
      * 获取最后一页
      * @return
      */
-    public Page getTheLastPage(){
+    public Page getTailEndPage(){
         return this.getEndPage(true);
     }
 
@@ -193,10 +202,10 @@ public class File implements Serializable{
             public boolean visit(File file) {
                 if(file instanceof Page && file.isValid()) {
                     page = (Page)file;
-                    if(reversed)
-                        page.setTheLastPage(true);
+                    if(reversed && page.getPageType() != Page.PageType.HeadEnd)
+                        page.setPageType(Page.PageType.TailEnd);
                     else
-                        page.setFirstPage(true);
+                        page.setPageType(Page.PageType.HeadEnd);
                     return false;
                 }
                 return true;

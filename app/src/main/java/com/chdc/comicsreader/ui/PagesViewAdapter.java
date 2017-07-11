@@ -2,7 +2,6 @@ package com.chdc.comicsreader.ui;
 
 import android.content.Context;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -12,10 +11,10 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
+import android.widget.TextView;
 
 import com.chdc.comicsreader.R;
-import com.chdc.comicsreader.ViewHelper;
+import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
 
@@ -237,11 +236,12 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     public boolean loadPage(Page page){
         // clear
         this.clear();
+        page.clear();
         startPage = page;
 
         this.setItemCount(Integer.MAX_VALUE);
         if(startPage == null || !startPage.isValid()) {
-            startPage = book.getFirstPage();
+            startPage = book.getHeadEndPage();
         }
         else {
             this.owner.scrollToPosition(1000);
@@ -361,16 +361,22 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
 
     public class PageHolder extends RecyclerView.ViewHolder{
 
+        TextView textView;
         ImageView imageView;
         private Page page;
 
         public PageHolder(View itemView) {
             super(itemView);
             imageView = (ImageView) itemView.findViewById(R.id.page);
+            textView = (TextView) itemView.findViewById(R.id.title);
         }
 
         public void setPage(Page page){
             this.page = page;
+            if(page != null && page.getPageType() == Page.PageType.HeadEnd)
+                setTitle(page.getParent().getUrl());
+            else
+                setTitle(null);
         }
 
         public void setBitmap(Bitmap bitmap){
@@ -379,6 +385,19 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                 return;
             }
             imageView.setImageBitmap(bitmap);
+        }
+
+        public void setTitle(String title){
+            if(title == null || title.isEmpty()){
+                if(textView.getVisibility() == View.VISIBLE)
+                    textView.setVisibility(View.GONE);
+            }
+            else{
+                if(textView.getVisibility() == View.GONE) {
+                    textView.setText(title);
+                    textView.setVisibility(View.VISIBLE);
+                }
+            }
         }
 
         public Page getPage() {

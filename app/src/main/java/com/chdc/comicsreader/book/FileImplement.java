@@ -1,6 +1,7 @@
 package com.chdc.comicsreader.book;
 
 import java.io.InputStream;
+import java.util.regex.Pattern;
 
 /**
  * Created by Wen on 2017/7/8.
@@ -22,7 +23,7 @@ public abstract class FileImplement {
      * @param url
      * @return
      */
-    public abstract String[] getFiles(String url, String pattern);
+    public abstract String[] getFiles(String url, Pattern pattern);
 
     public abstract boolean delete(String url);
 

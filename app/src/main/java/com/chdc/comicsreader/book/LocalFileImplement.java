@@ -3,6 +3,7 @@ package com.chdc.comicsreader.book;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
+import java.util.regex.Pattern;
 
 /**
  * Created by Wen on 2017/7/8.
@@ -32,9 +33,9 @@ public class LocalFileImplement extends FileImplement {
     }
 
     @Override
-    public String[] getFiles(String url, final String pattern) {
+    public String[] getFiles(String url, final Pattern pattern) {
         java.io.File file = new java.io.File(url);
-        java.io.File[] files = file.listFiles(f -> f.isFile() && f.getName().matches(pattern));
+        java.io.File[] files = file.listFiles(f -> f.isFile() && pattern.matcher(f.getName()).find());
         if(files == null)
             return new String[0];
         String[] result = new String[files.length];

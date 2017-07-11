@@ -1,6 +1,6 @@
 package com.chdc.comicsreader.book;
 
-import com.chdc.comicsreader.ViewHelper;
+import com.chdc.comicsreader.utils.ViewHelper;
 
 import java.util.Objects;
 
@@ -44,7 +44,7 @@ public class Book extends File{
                 file = file.getParent();
             }
             else {
-                Page p = direction >= 0 ? sibling.getFirstPage() : sibling.getTheLastPage();
+                Page p = direction >= 0 ? sibling.getHeadEndPage() : sibling.getTailEndPage();
                 if(p != null)
                     return p;
                 else

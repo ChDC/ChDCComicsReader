@@ -3,7 +3,7 @@ package com.chdc.comicsreader.book;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
-import com.chdc.comicsreader.ViewHelper;
+import com.chdc.comicsreader.utils.ViewHelper;
 
 import java.io.InputStream;
 import java.util.List;
@@ -14,11 +14,51 @@ import java.util.List;
 
 public class Page extends File{
 
+    public PageType getPageType() {
+        if(pageType != PageType.Unknown)
+            return pageType;
+        File parent = getParent();
+        if(parent == null)
+            pageType = PageType.HeadEnd;
+        List<File> childrenOfParent = parent.getChildren();
+        if(childrenOfParent == null || childrenOfParent.size() <= 0)
+            pageType = PageType.HeadEnd;
+        if(childrenOfParent.get(0).equals(this))
+            pageType = PageType.HeadEnd;
+        else if(childrenOfParent.get(childrenOfParent.size() - 1).equals(this))
+            pageType = PageType.TailEnd;
+        else
+            pageType = PageType.NotEnd;
+        return pageType;
+    }
+
+    public void setPageType(PageType pageType) {
+        this.pageType = pageType;
+    }
+
+    public enum PageType{
+        /**
+         * 未知
+         */
+        Unknown,
+        /**
+         * 非端点
+         */
+        NotEnd,
+        /**
+         * 开始页面
+         * 如果该 Page 是目录中的唯一一个 Page，那么它也是 HeadEnd 类型
+         */
+        HeadEnd,
+        /**
+         * 结束页面
+         */
+        TailEnd,
+    }
 
     private Bitmap bitmap;
     private boolean cannotLoadBitmap = false;
-    private boolean isFirstPage = false;
-    private boolean isTheLastPage = false;
+    private PageType pageType = PageType.Unknown;
 
     public Page(String url){
         super(url);
@@ -82,22 +122,15 @@ public class Page extends File{
     }
 
     public void setBitmap(Bitmap bitmap) {
+        if(bitmap == null)
+            this.recycleBitmap();
         this.bitmap = bitmap;
     }
 
-    public boolean isFirstPage() {
-        return isFirstPage;
-    }
 
-    public void setFirstPage(boolean firstPage) {
-        isFirstPage = firstPage;
-    }
-
-    public boolean isTheLastPage() {
-        return isTheLastPage;
-    }
-
-    public void setTheLastPage(boolean theLastPage) {
-        isTheLastPage = theLastPage;
+    public void clear(){
+        this.parent = null;
+        cannotLoadBitmap = false;
+        pageType = PageType.Unknown;
     }
 }

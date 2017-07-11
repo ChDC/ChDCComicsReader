@@ -2,7 +2,6 @@ package com.chdc.comicsreader.ui;
 
 import android.content.Intent;
 import android.content.res.Configuration;
-import android.nfc.Tag;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
@@ -13,11 +12,9 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.chdc.comicsreader.R;
-import com.chdc.comicsreader.ViewHelper;
+import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
-
-import java.util.Objects;
 
 public class ViewComicsActivity extends AppCompatActivity {
 

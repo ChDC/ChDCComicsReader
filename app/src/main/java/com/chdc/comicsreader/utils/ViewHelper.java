@@ -1,4 +1,4 @@
-package com.chdc.comicsreader;
+package com.chdc.comicsreader.utils;
 
 import android.app.Activity;
 import android.content.Context;
@@ -10,14 +10,15 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.util.DisplayMetrics;
-import android.util.Log;
+
+import com.chdc.comicsreader.App;
+import com.chdc.comicsreader.R;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Array;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.text.BreakIterator;
 
 /**
  * Created by Wen on 2017/7/8.
@@ -102,7 +103,11 @@ public class ViewHelper {
                 x = screenWidth;
                 y = screenHeight;
             }
-            options.inSampleSize = calculateInSampleSize(options, x, y);
+//            options.inSampleSize = calculateInSampleSize(options, x, y);
+            // 刚刚大于屏幕宽度
+            // options.inSampleSize = options.outWidth < x ? 1 : (int)Math.pow(2, Math.floor(Math.log(options.outWidth / x) / Math.log(2)));
+            // 刚刚大于屏幕宽度的二倍
+            options.inSampleSize = options.outWidth < x * 2 ? 1 : (int)Math.pow(2, Math.floor(Math.log(options.outWidth / x / 2) / Math.log(2)));
             double xSScale = ((double)options.outWidth) / ((double)x);
             double ySScale = ((double)options.outHeight) / ((double)y);
             double startScale = xSScale > ySScale ? xSScale : ySScale;
@@ -115,7 +120,6 @@ public class ViewHelper {
             options = null;
         return BitmapFactory.decodeStream(is, null, options);
     }
-
 
     private int calculateInSampleSize(BitmapFactory.Options options,
                                      int reqWidth, int reqHeight) {
