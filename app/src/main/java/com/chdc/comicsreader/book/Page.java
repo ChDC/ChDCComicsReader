@@ -23,12 +23,11 @@ public class Page extends File{
         List<File> childrenOfParent = parent.getChildren();
         if(childrenOfParent == null || childrenOfParent.size() <= 0)
             pageType = PageType.HeadEnd;
-        if(childrenOfParent.get(0).equals(this))
-            pageType = PageType.HeadEnd;
-        else if(childrenOfParent.get(childrenOfParent.size() - 1).equals(this))
-            pageType = PageType.TailEnd;
-        else
-            pageType = PageType.NotEnd;
+        else{
+            int i = childrenOfParent.indexOf(this);
+            if(i >= 0)
+                pageType = ((Page)childrenOfParent.get(i)).getPageType();
+        }
         return pageType;
     }
 

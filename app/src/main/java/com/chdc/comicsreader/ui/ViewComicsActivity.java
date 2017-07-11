@@ -1,21 +1,27 @@
 package com.chdc.comicsreader.ui;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Configuration;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.chdc.comicsreader.R;
+import com.chdc.comicsreader.book.File;
+import com.chdc.comicsreader.utils.RecyclerItemClickListener;
 import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
 
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -24,7 +30,10 @@ public class ViewComicsActivity extends AppCompatActivity {
     private static final String TAG = "ViewComicsActivity";
     RecyclerView pagesView;
     PagesViewAdapter pagesViewAdapter;
+    LinearLayoutManager layoutManager;
     ExecutorService pool = Executors.newFixedThreadPool(4);
+    View toolbar;
+    Book book;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -50,6 +59,84 @@ public class ViewComicsActivity extends AppCompatActivity {
         pagesView.setLayoutManager(pageLayoutManager);
         pagesViewAdapter = new PagesViewAdapter(this, pagesView, pool);
         pagesView.setAdapter(pagesViewAdapter);
+        toolbar = findViewById(R.id.toolbar);
+
+//        toolbar.setOnClickListener(v -> {
+//            toolbar.setVisibility(View.INVISIBLE);
+//        });
+
+        pagesView.setOnClickListener(v -> {
+            toolbar.setVisibility(View.VISIBLE);
+        });
+
+        pagesView.addOnItemTouchListener(
+                new RecyclerItemClickListener(this, pagesView, new RecyclerItemClickListener.OnItemClickListener() {
+                    @Override public void onItemClick(View view, int position) {
+                        // do whatever
+                        ViewHelper.INSTANCE.toggleVisibility(toolbar);
+                    }
+
+                    @Override public void onLongItemClick(View view, int position) {
+                        // do whatever
+                    }
+                })
+        );
+
+        findViewById(R.id.btnNextChapter).setOnClickListener(v -> {
+            Page cp = pagesViewAdapter.getCurrentPage();
+            Page np = book.getNextChapterPage(cp);
+            if(np == null)
+                ViewHelper.INSTANCE.showMessage("这已经是最后一章了！");
+            else
+                pagesViewAdapter.loadPage(np);
+            ViewHelper.INSTANCE.hideView(toolbar);
+        });
+
+        findViewById(R.id.btnLastChapter).setOnClickListener(v -> {
+            Page cp = pagesViewAdapter.getCurrentPage();
+            if(cp.getPageType() == Page.PageType.HeadEnd){
+                Page np = book.getLastChapterPage(cp);
+                if(np == null)
+                    ViewHelper.INSTANCE.showMessage("这已经是第一章了！");
+                else
+                    pagesViewAdapter.loadPage(np);
+            }
+            else {
+                Page np = (Page)cp.getParent().getChildren().get(0);
+                pagesViewAdapter.loadPage(np);
+            }
+            ViewHelper.INSTANCE.hideView(toolbar);
+        });
+
+        findViewById(R.id.btnDelete).setOnClickListener(v -> {
+            // 创建 AlertDialog.Builder 对象
+            final AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("删除章节");
+            builder.setMessage("确认删除章节？");
+            builder.setPositiveButton("确定", (d, i) -> {
+                try{
+                    Page cp = pagesViewAdapter.getCurrentPage();
+                    Page np = book.getNextChapterPage(cp);
+                    if(np == null)
+                        np = book.getLastPage(cp);
+                    if(np == null){
+                        finishForEmpty();
+                        return;
+                    }
+                    // 删除本章
+                    cp.delete();
+                    // 加载下一章
+                    pagesViewAdapter.loadPage(np);
+                    ViewHelper.INSTANCE.hideView(toolbar);
+                }
+                catch (Exception e){
+                    e.printStackTrace();
+                }
+            });
+            AlertDialog ad = builder.create();
+            ad.show();
+
+        });
     }
 
     public void handleIntent(Intent intent){
@@ -57,7 +144,6 @@ public class ViewComicsActivity extends AppCompatActivity {
             return;
         String action = intent.getAction();
 
-        Book book;
         Page startPage;
         if(Intent.ACTION_VIEW.equals(action)){
             String file =  ViewHelper.INSTANCE.getPath(intent.getData());
@@ -74,15 +160,17 @@ public class ViewComicsActivity extends AppCompatActivity {
 
         if(pagesViewAdapter != null) {
             pagesViewAdapter.setBook(book);
-//            pagesViewAdapter.setStartPage(startPage);
             if(!pagesViewAdapter.loadPage(startPage)){
-                Toast.makeText(this, "该漫画为空", Toast.LENGTH_SHORT).show();
-                finish();
-//            pagesViewAdapter.setItemCount(0);
-                return;
+                finishForEmpty();
             }
         }
     }
+
+    public void finishForEmpty(){
+        ViewHelper.INSTANCE.showMessage("该书为空！");
+        finish();
+    }
+
 
 
     @Override

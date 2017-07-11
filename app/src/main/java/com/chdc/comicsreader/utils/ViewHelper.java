@@ -10,6 +10,8 @@ import android.net.Uri;
 import android.os.Environment;
 import android.os.storage.StorageManager;
 import android.util.DisplayMetrics;
+import android.view.View;
+import android.widget.Toast;
 
 import com.chdc.comicsreader.App;
 import com.chdc.comicsreader.R;
@@ -238,4 +240,24 @@ public class ViewHelper {
     public void setLandScape(boolean landScape) {
         isLandScape = landScape;
     }
+
+    public void showMessage(String message){
+        Toast.makeText(App.getContext(), message, Toast.LENGTH_SHORT).show();
+    }
+
+    public void showView(View view){
+        view.setVisibility(View.VISIBLE);
+    }
+
+    public void hideView(View view){
+        view.setVisibility(View.INVISIBLE);
+    }
+
+    public void toggleVisibility(View view){
+        if(view.getVisibility() == View.VISIBLE)
+            view.setVisibility(View.INVISIBLE);
+        else
+            view.setVisibility(View.VISIBLE);
+    }
+
 }

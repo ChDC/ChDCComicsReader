@@ -2,6 +2,7 @@ package com.chdc.comicsreader.book;
 
 import com.chdc.comicsreader.utils.ViewHelper;
 
+import java.util.List;
 import java.util.Objects;
 
 /**
@@ -36,17 +37,22 @@ public class Book extends File{
         super(rootPath);
     }
 
-    protected Page getSiblingPage(Page page, int direction){
-        File file = page;
+    /**
+     * 获取下一个文件下的第一页
+     * @param file
+     * @param direction
+     * @return
+     */
+    protected Page getSiblingPage(File file, int direction, boolean willGetHeadEndPage){
         while(file != null && !Objects.equals(file.getUrl(), this.url)){
             File sibling = file.getSibling(direction >= 0 ? 1 : -1 );
             if(sibling == null){
                 file = file.getParent();
             }
             else {
-                Page p = direction >= 0 ? sibling.getHeadEndPage() : sibling.getTailEndPage();
-                if(p != null)
-                    return p;
+                Page page = willGetHeadEndPage ? sibling.getHeadEndPage() : sibling.getTailEndPage();
+                if(page != null)
+                    return page;
                 else
                     file = sibling;
             }
@@ -55,11 +61,36 @@ public class Book extends File{
     }
 
     public Page getNextPage(Page page){
-        return this.getSiblingPage(page, 1);
+        return this.getSiblingPage(page, 1, true);
     }
 
     public Page getLastPage(Page page){
-        return this.getSiblingPage(page, -1);
+        return this.getSiblingPage(page, -1, false);
+    }
+
+    public Page getNextChapterPage(Page page){
+        // 考虑目录中既有文件又有目录的情况
+        List<File> childrenOfParent = page.getParent().getChildren();
+        int i = -1;
+        for(File file : childrenOfParent){
+            if(!(file instanceof Page))
+                break;
+            i++;
+        }
+        return this.getSiblingPage(childrenOfParent.get(i), 1, true);
+    }
+
+    public Page getLastChapterPage(Page page){
+        // 考虑目录中既有文件又有目录的情况
+        Page p = this.getSiblingPage(page.getParent(), -1, true);
+        if(p == null)
+            return null;
+        // 如果有后继表明不是最后一个
+        Page fp = (Page)p.getParent().getChildren().get(0);
+        if(!fp.equals(p) && fp.isValid())
+            return fp;
+        else
+            return p;
     }
 
     @Override

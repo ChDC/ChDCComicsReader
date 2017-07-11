@@ -58,6 +58,7 @@ public class LocalFileImplement extends FileImplement {
 
     @Override
     public boolean delete(String url) {
+        // 先重命名，然后再开线程删除
         return new File(url).delete();
     }
 

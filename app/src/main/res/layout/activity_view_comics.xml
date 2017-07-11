@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.chdc.comicsreader.ui.ViewComicsActivity">
@@ -10,5 +11,74 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         />
+    <android.support.constraint.ConstraintLayout
+        android:id="@+id/toolbar"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="invisible"
+        tools:visibility="visible"
+        tools:layout_editor_absoluteY="0dp"
+        tools:layout_editor_absoluteX="0dp">
+
+        <Button
+            android:id="@+id/btnRotateScreen"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text="横屏"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toLeftOf="@+id/btnFavourite"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+        <Button
+            android:id="@+id/btnFavourite"
+            android:text="收藏"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintLeft_toRightOf="@+id/btnRotateScreen"
+            app:layout_constraintRight_toLeftOf="@+id/btnDelete"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+        <Button
+            android:id="@+id/btnDelete"
+            android:text="删除"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintRight_toLeftOf="@+id/btnCatalog"
+            app:layout_constraintLeft_toRightOf="@+id/btnFavourite"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+        <Button
+            android:id="@+id/btnCatalog"
+            android:text="目录"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            app:layout_constraintHorizontal_weight="1"
+            app:layout_constraintLeft_toRightOf="@+id/btnDelete"
+            app:layout_constraintRight_toRightOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            />
+
+        <Button
+            android:id="@+id/btnNextChapter"
+            android:text="下一章"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintRight_toRightOf="parent"
+            android:layout_marginRight="43dp"
+            android:layout_marginBottom="98dp"
+            app:layout_constraintBottom_toTopOf="@+id/btnCatalog" />
+        <Button
+            android:id="@+id/btnLastChapter"
+            android:text="上一章"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            app:layout_constraintLeft_toLeftOf="parent"
+            android:layout_marginBottom="98dp"
+            app:layout_constraintBottom_toTopOf="@+id/btnRotateScreen"
+            android:layout_marginLeft="32dp" />
+    </android.support.constraint.ConstraintLayout>
 
 </FrameLayout>
