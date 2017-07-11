@@ -21,6 +21,10 @@ import com.chdc.comicsreader.book.Page;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.LinkedBlockingQueue;
 
 /**
  * Created by Wen on 2017/7/7.
@@ -31,11 +35,16 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     private static final String TAG = "PagesViewAdapter";
 
     Context context;
-    private Book book;
     RecyclerView owner;
+    ExecutorService pool;
+
+    private Book book;
     private Page startPage;
+
     SparseArray<Page> pageCache;
     int cachePageNumber = 2; // 缓存两个图片
+    BlockingQueue<Page> loadBitmapQueue = new LinkedBlockingQueue<>(20);
+
     boolean isStartPageLoaded = false;
     boolean isLockedForChangeBackEnd = false;
     boolean isLockedForChangeFrontEnd = false;
@@ -43,10 +52,25 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     // 元素数量
     private int itemCount = 0;
 
-    public PagesViewAdapter(Context context, RecyclerView owner){
+    public PagesViewAdapter(Context context, RecyclerView owner, ExecutorService pool){
         this.context = context;
         this.owner = owner;
         pageCache = new SparseArray<>(6);
+        this.pool = pool;
+
+        Thread loadBitmapThread = new Thread(() -> {
+            while(true){
+                try {
+                    Page page = loadBitmapQueue.take();
+                    if(page != null && pageCache.indexOfValue(page) >= 0)
+                        page.getBitmap();
+                } catch (InterruptedException e) {
+                    return;
+                }
+            }
+        });
+        loadBitmapThread.setDaemon(true);
+        loadBitmapThread.start();
     }
 
     @Override
@@ -153,18 +177,18 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
             holder.setBitmap(page.getBitmap());
         else{
             holder.setBitmap(ViewHelper.INSTANCE.getLoadingPicture());
-            new Thread(() -> {
+            pool.submit(() -> {
                 Bitmap bitmap = np.getBitmap();
                 this.owner.post(() -> {
                     holder.setBitmap(bitmap);
                 });
-            }).start();
+            });
         }
 
         // 缓存 Pages
-        new Thread(() -> {
+        pool.submit(() -> {
             cachePages(np, position, direction, cachePageNumber);
-        }).start();
+        });
     }
 
     void setBlankHolder(PageHolder holder){
@@ -204,8 +228,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         if(direction == Direction.CURRENT)
             direction = Direction.NEXT;
 
-        if(pageCache.get(position) == null)
-            pageCache.put(position, page);
+        pageCache.put(position, page);
         for(int i = 0; i < count; i++){
             position += direction == Direction.NEXT ? 1 : -1;
             Page cp = pageCache.get(position);
@@ -216,10 +239,14 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                 page = direction == Direction.NEXT ? book.getNextPage(page) : book.getLastPage(page);
                 if(page == null)
                     break;
-                if(pageCache.get(position) == null)
-                    pageCache.put(position, page);
+                pageCache.put(position, page);
             }
-            page.getBitmap();
+            try {
+                loadBitmapQueue.put(page);
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+//            page.getBitmap();
         }
     }
 
@@ -258,6 +285,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         isStartPageLoaded = false;
         isLockedForChangeBackEnd = false;
         isLockedForChangeFrontEnd = false;
+        loadBitmapQueue.clear();
         setItemCount(0);
     }
 
@@ -329,9 +357,9 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         if(position <0 || position > itemCount)
             return;
         int np = position;
-        new Thread(() -> {
+        pool.submit(() -> {
             removeCache(np, direction);
-        }).start();
+        });
     }
 
     @Override
@@ -374,9 +402,9 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         public void setPage(Page page){
             this.page = page;
             if(page != null && page.getPageType() == Page.PageType.HeadEnd)
-                setTitle(page.getParent().getUrl());
+                showTitle();
             else
-                setTitle(null);
+                hideTitle();
         }
 
         public void setBitmap(Bitmap bitmap){
@@ -387,17 +415,22 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
             imageView.setImageBitmap(bitmap);
         }
 
-        public void setTitle(String title){
-            if(title == null || title.isEmpty()){
-                if(textView.getVisibility() == View.VISIBLE)
-                    textView.setVisibility(View.GONE);
-            }
-            else{
+        public void showTitle(){
+            try {
+                String title = page.getParent().getUrl().replace(book.getUrl(), "");
+                textView.setText(title);
                 if(textView.getVisibility() == View.GONE) {
-                    textView.setText(title);
                     textView.setVisibility(View.VISIBLE);
                 }
             }
+            catch (Exception e){
+                return;
+            }
+        }
+
+        public void hideTitle(){
+            if(textView.getVisibility() == View.VISIBLE)
+                textView.setVisibility(View.GONE);
         }
 
         public Page getPage() {

@@ -16,11 +16,15 @@ import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class ViewComicsActivity extends AppCompatActivity {
 
     private static final String TAG = "ViewComicsActivity";
     RecyclerView pagesView;
     PagesViewAdapter pagesViewAdapter;
+    ExecutorService pool = Executors.newFixedThreadPool(4);
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,7 +48,7 @@ public class ViewComicsActivity extends AppCompatActivity {
 //        pageLayoutManager.setInitialPrefetchItemCount(10);
 
         pagesView.setLayoutManager(pageLayoutManager);
-        pagesViewAdapter = new PagesViewAdapter(this, pagesView);
+        pagesViewAdapter = new PagesViewAdapter(this, pagesView, pool);
         pagesView.setAdapter(pagesViewAdapter);
     }
 
@@ -109,4 +113,10 @@ public class ViewComicsActivity extends AppCompatActivity {
         pagesViewAdapter.loadPage(pagesViewAdapter.getCurrentPage());
     }
 
+
+    @Override
+    public void onDestroy(){
+        super.onDestroy();
+        pool.shutdownNow();
+    }
 }

@@ -69,20 +69,25 @@ public class Page extends File{
         return getFileImplement().getInputStream(url);
     }
 
-    public Bitmap refreshBitmap(){
+    protected synchronized void refreshBitmap(){
+        if(bitmap != null && !bitmap.isRecycled())
+            return;
+
         BitmapFactory.Options options;
         try (InputStream is = this.getInputStream()) {
             options = ViewHelper.INSTANCE.getBitmapOption(is);
         } catch (Exception e) {
             e.printStackTrace();
-            return null;
+            bitmap = null;
+            return;
         }
         try (InputStream is = this.getInputStream()) {
-            return ViewHelper.INSTANCE.decodeStream(is, options);
-
+            bitmap = ViewHelper.INSTANCE.decodeStream(is, options);
+            return;
         } catch (Exception e) {
+            bitmap = null;
             e.printStackTrace();
-            return null;
+            return;
         }
     }
 
@@ -106,7 +111,7 @@ public class Page extends File{
 
     public Bitmap getBitmap() {
         if(!cannotLoadBitmap && (bitmap == null || bitmap.isRecycled())) {
-            bitmap = refreshBitmap();
+            refreshBitmap();
             if(bitmap == null)
                 cannotLoadBitmap = true;
         }
