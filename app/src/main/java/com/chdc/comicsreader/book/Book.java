@@ -11,26 +11,14 @@ import java.util.Objects;
 
 public class Book extends File{
 
-    protected static Book[] sdcardBooks;
 
     public static Book getBookByImageURL(String url){
-        if(sdcardBooks == null){
-            String isd = ViewHelper.INSTANCE.getInnerSDCardPath();
-            String esd = ViewHelper.INSTANCE.getStoragePath(true);
-            sdcardBooks = new Book[2];
-            if(isd != null)
-                sdcardBooks[0] = new Book(isd);
-            if(esd != null)
-                sdcardBooks[1] = new Book(esd);
-        }
         if(url == null)
-            return sdcardBooks[0];
-
-        for(int i = 0; i < sdcardBooks.length; i++){
-            if(url.startsWith(sdcardBooks[i].getUrl()))
-                return sdcardBooks[i];
-        }
-        return new Book("/sdcard");
+            return null;
+        FileImplement fi = new File(url).getFileImplement();
+        if(fi == null)
+            return null;
+        return new Book(fi.getRootPath(url));
     }
 
     public Book(String rootPath){

@@ -81,7 +81,7 @@ public class Page extends File{
             return;
         }
         try (InputStream is = this.getInputStream()) {
-            bitmap = ViewHelper.INSTANCE.decodeStream(is, options);
+            bitmap = ViewHelper.INSTANCE.decodeBitmapFromStream(is, options);
             return;
         } catch (Exception e) {
             bitmap = null;
@@ -136,5 +136,10 @@ public class Page extends File{
         this.parent = null;
         cannotLoadBitmap = false;
         pageType = PageType.Unknown;
+    }
+
+
+    public java.io.File getCacheedFile(){
+        return this.getFileImplement().cacheFile(url);
     }
 }

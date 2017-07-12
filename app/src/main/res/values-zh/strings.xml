@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ChDC 漫画阅读器</string>
+    <string name="msg_lastchapter">这已经是最后一章了!</string>
+    <string name="msg_firstchapter">这已经是第一章了！</string>
+    <string name="msg_emptychapter">本章为空</string>
+    <string name="title_deletechapter">删除章节</string>
+    <string name="msg_affirm_delete_chapter">确认删除章节：%s？\"</string>
+    <string name="title_cancel">取消</string>
+    <string name="title_ok">确定</string>
+    <string name="msg_emptybook">本书为空！</string>
+    <string name="msg_fail_to_delete">删除失败，请检查是否有写权限！</string>
+</resources>

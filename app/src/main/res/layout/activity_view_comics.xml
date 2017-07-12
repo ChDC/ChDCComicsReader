@@ -20,65 +20,95 @@
         tools:layout_editor_absoluteY="0dp"
         tools:layout_editor_absoluteX="0dp">
 
-        <Button
-            android:id="@+id/btnRotateScreen"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:text="横屏"
-            app:layout_constraintHorizontal_weight="1"
-            app:layout_constraintLeft_toLeftOf="parent"
-            app:layout_constraintRight_toLeftOf="@+id/btnFavourite"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-        <Button
-            android:id="@+id/btnFavourite"
-            android:text="收藏"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintHorizontal_weight="1"
-            app:layout_constraintLeft_toRightOf="@+id/btnRotateScreen"
-            app:layout_constraintRight_toLeftOf="@+id/btnDelete"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-        <Button
-            android:id="@+id/btnDelete"
-            android:text="删除"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintHorizontal_weight="1"
-            app:layout_constraintRight_toLeftOf="@+id/btnCatalog"
-            app:layout_constraintLeft_toRightOf="@+id/btnFavourite"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
-        <Button
-            android:id="@+id/btnCatalog"
-            android:text="目录"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            app:layout_constraintHorizontal_weight="1"
-            app:layout_constraintLeft_toRightOf="@+id/btnDelete"
-            app:layout_constraintRight_toRightOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
-            />
+        <!--<TextView-->
+            <!--android:id="@+id/txtQuality"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--android:text="标准"-->
+            <!--app:layout_constraintLeft_toLeftOf="parent"-->
+            <!--app:layout_constraintTop_toTopOf="parent"-->
+            <!--/>-->
 
-        <Button
+        <!--<TextView-->
+            <!--android:id="@+id/txtTitle"-->
+            <!--android:layout_width="wrap_content"-->
+            <!--android:layout_height="wrap_content"-->
+            <!--tools:text="标题标题"-->
+            <!--app:layout_constraintLeft_toLeftOf="parent"-->
+            <!--app:layout_constraintTop_toTopOf="parent"-->
+            <!--/>-->
+
+        <android.support.constraint.ConstraintLayout
+            android:id="@+id/toolbar_bottom"
+            android:background="#e0e0e0"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintLeft_toLeftOf="parent"
+            app:layout_constraintRight_toRightOf="parent"
+            android:paddingBottom="5dp"
+            android:paddingTop="5dp"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content">
+
+            <ImageButton
+                android:id="@+id/btnRotateScreen"
+                android:src="@drawable/toolbar_turnright"
+                style="@style/BottomToolbar"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toLeftOf="@+id/btnFavourite"
+                app:layout_constraintHorizontal_weight="1"
+                />
+            <ImageButton
+                android:id="@+id/btnFavourite"
+                android:src="@drawable/toolbar_favorites"
+                style="@style/BottomToolbar"
+                app:layout_constraintLeft_toRightOf="@+id/btnRotateScreen"
+                app:layout_constraintRight_toLeftOf="@+id/btnDelete"
+                app:layout_constraintHorizontal_weight="1"
+                />
+            <ImageButton
+                android:id="@+id/btnDelete"
+                android:src="@drawable/toolbar_delete"
+                style="@style/BottomToolbar"
+                app:layout_constraintRight_toLeftOf="@+id/btnCatalog"
+                app:layout_constraintLeft_toRightOf="@+id/btnFavourite"
+                app:layout_constraintHorizontal_weight="1"
+                />
+            <ImageButton
+                android:id="@+id/btnCatalog"
+                android:src="@drawable/toolbar_view_detail_s"
+                style="@style/BottomToolbar"
+                app:layout_constraintRight_toRightOf="parent"
+                app:layout_constraintLeft_toRightOf="@+id/btnDelete"
+                app:layout_constraintHorizontal_weight="1"
+                />
+
+        </android.support.constraint.ConstraintLayout>
+
+
+        <ImageButton
             android:id="@+id/btnNextChapter"
-            android:text="下一章"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            android:src="@drawable/toolbar_next"
+            style="@style/NavigationToolbar"
+            android:paddingLeft="10dp"
             app:layout_constraintRight_toRightOf="parent"
             android:layout_marginRight="43dp"
             android:layout_marginBottom="98dp"
-            app:layout_constraintBottom_toTopOf="@+id/btnCatalog" />
-        <Button
+            app:layout_constraintBottom_toTopOf="@+id/toolbar_bottom"
+            android:layout_marginEnd="43dp"
+            />
+
+        <ImageButton
             android:id="@+id/btnLastChapter"
-            android:text="上一章"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
+            style="@style/NavigationToolbar"
+            android:paddingRight="10dp"
+            android:layout_marginBottom="100dp"
+            android:layout_marginLeft="28dp"
+            android:src="@drawable/toolbar_previous"
+            app:layout_constraintBottom_toTopOf="@+id/toolbar_bottom"
             app:layout_constraintLeft_toLeftOf="parent"
-            android:layout_marginBottom="98dp"
-            app:layout_constraintBottom_toTopOf="@+id/btnRotateScreen"
-            android:layout_marginLeft="32dp" />
+            android:layout_marginStart="28dp"
+            />
+
     </android.support.constraint.ConstraintLayout>
 
 </FrameLayout>

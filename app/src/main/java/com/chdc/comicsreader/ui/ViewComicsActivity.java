@@ -1,7 +1,7 @@
 package com.chdc.comicsreader.ui;
 
-import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -10,18 +10,13 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
-import android.view.Window;
-import android.view.WindowManager;
-import android.widget.Toast;
 
 import com.chdc.comicsreader.R;
-import com.chdc.comicsreader.book.File;
 import com.chdc.comicsreader.utils.RecyclerItemClickListener;
 import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
 
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -38,14 +33,14 @@ public class ViewComicsActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        requestWindowFeature(Window.FEATURE_NO_TITLE);
-        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,  WindowManager.LayoutParams.FLAG_FULLSCREEN);
+//        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        ViewHelper.INSTANCE.enterFullScreen(this);
 
         setContentView(R.layout.activity_view_comics);
 
         ViewHelper.INSTANCE.init(this);
-
         loadViews();
+        changeForScreenRotated(getResources().getConfiguration());
 
         handleIntent(getIntent());
     }
@@ -53,17 +48,29 @@ public class ViewComicsActivity extends AppCompatActivity {
     public void loadViews(){
         pagesView = (RecyclerView) findViewById(R.id.pagesView);
         LinearLayoutManager pageLayoutManager = new LinearLayoutManager(this);
-//        pageLayoutManager.setItemPrefetchEnabled(true);
-//        pageLayoutManager.setInitialPrefetchItemCount(10);
 
         pagesView.setLayoutManager(pageLayoutManager);
         pagesViewAdapter = new PagesViewAdapter(this, pagesView, pool);
         pagesView.setAdapter(pagesViewAdapter);
         toolbar = findViewById(R.id.toolbar);
 
-//        toolbar.setOnClickListener(v -> {
-//            toolbar.setVisibility(View.INVISIBLE);
-//        });
+        findViewById(R.id.btnRotateScreen).setOnClickListener(v -> {
+            switch (getResources().getConfiguration().orientation){
+                case Configuration.ORIENTATION_LANDSCAPE:
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT);
+                    break;
+
+                case Configuration.ORIENTATION_PORTRAIT:
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                    break;
+
+                default:
+                    Log.e(TAG, "undefined value");
+                    setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_SENSOR_LANDSCAPE);
+                    break;
+            }
+            hideToolbar();
+        });
 
         pagesView.setOnClickListener(v -> {
             toolbar.setVisibility(View.VISIBLE);
@@ -73,11 +80,23 @@ public class ViewComicsActivity extends AppCompatActivity {
                 new RecyclerItemClickListener(this, pagesView, new RecyclerItemClickListener.OnItemClickListener() {
                     @Override public void onItemClick(View view, int position) {
                         // do whatever
-                        ViewHelper.INSTANCE.toggleVisibility(toolbar);
+                        if(toolbar.getVisibility() == View.VISIBLE)
+                            hideToolbar();
+                        else
+                            showToolbar();
                     }
 
                     @Override public void onLongItemClick(View view, int position) {
                         // do whatever
+                        try {
+                            PagesViewAdapter.PageHolder vh = (PagesViewAdapter.PageHolder) pagesView.findViewHolderForAdapterPosition(position);
+                            Page cp = vh.getPage();
+                            Intent intent = ViewHelper.INSTANCE.getImageFileIntent(cp.getCacheedFile());
+                            startActivity(intent);
+                        }
+                        catch (Exception e){
+                            e.printStackTrace();
+                        }
                     }
                 })
         );
@@ -86,10 +105,10 @@ public class ViewComicsActivity extends AppCompatActivity {
             Page cp = pagesViewAdapter.getCurrentPage();
             Page np = book.getNextChapterPage(cp);
             if(np == null)
-                ViewHelper.INSTANCE.showMessage("这已经是最后一章了！");
+                ViewHelper.INSTANCE.showMessage(getString(R.string.msg_lastchapter));
             else
                 pagesViewAdapter.loadPage(np);
-            ViewHelper.INSTANCE.hideView(toolbar);
+            hideToolbar();
         });
 
         findViewById(R.id.btnLastChapter).setOnClickListener(v -> {
@@ -97,7 +116,7 @@ public class ViewComicsActivity extends AppCompatActivity {
             if(cp.getPageType() == Page.PageType.HeadEnd){
                 Page np = book.getLastChapterPage(cp);
                 if(np == null)
-                    ViewHelper.INSTANCE.showMessage("这已经是第一章了！");
+                    ViewHelper.INSTANCE.showMessage(getString(R.string.msg_firstchapter));
                 else
                     pagesViewAdapter.loadPage(np);
             }
@@ -105,37 +124,49 @@ public class ViewComicsActivity extends AppCompatActivity {
                 Page np = (Page)cp.getParent().getChildren().get(0);
                 pagesViewAdapter.loadPage(np);
             }
-            ViewHelper.INSTANCE.hideView(toolbar);
+            hideToolbar();
         });
 
         findViewById(R.id.btnDelete).setOnClickListener(v -> {
+            final Page cp = pagesViewAdapter.getCurrentPage();
+            if(cp == null || cp.getParent() == null){
+                ViewHelper.INSTANCE.showMessage(getString(R.string.msg_emptychapter));
+                return;
+            }
+
             // 创建 AlertDialog.Builder 对象
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
-            builder.setTitle("删除章节");
-            builder.setMessage("确认删除章节？");
-            builder.setPositiveButton("确定", (d, i) -> {
+            builder.setTitle(getString(R.string.title_deletechapter));
+            builder.setMessage(String.format(getString(R.string.msg_affirm_delete_chapter), cp.getParent().getUrl()));
+            builder.setPositiveButton(R.string.title_ok, (d, i) -> {
                 try{
-                    Page cp = pagesViewAdapter.getCurrentPage();
                     Page np = book.getNextChapterPage(cp);
                     if(np == null)
                         np = book.getLastPage(cp);
+                    // 删除本章
+                    boolean success = cp.getParent().delete();
+                    if(!success){
+                        ViewHelper.INSTANCE.showMessage(getString(R.string.msg_fail_to_delete));
+                        // 检查是否是外部存储卡，如果是就请求权限
+                        if(ViewHelper.INSTANCE.includeByExternalSDCard(cp.getUrl()))
+                            ViewHelper.INSTANCE.requestDocumentPermission(this);
+                        return;
+                    }
                     if(np == null){
                         finishForEmpty();
                         return;
                     }
-                    // 删除本章
-                    cp.delete();
                     // 加载下一章
                     pagesViewAdapter.loadPage(np);
-                    ViewHelper.INSTANCE.hideView(toolbar);
                 }
                 catch (Exception e){
                     e.printStackTrace();
                 }
             });
+            builder.setOnDismissListener(d -> hideToolbar());
+            builder.setNegativeButton(R.string.title_cancel, null);
             AlertDialog ad = builder.create();
             ad.show();
-
         });
     }
 
@@ -167,11 +198,20 @@ public class ViewComicsActivity extends AppCompatActivity {
     }
 
     public void finishForEmpty(){
-        ViewHelper.INSTANCE.showMessage("该书为空！");
+        ViewHelper.INSTANCE.showMessage(getString(R.string.msg_emptybook));
         finish();
     }
 
 
+    public void hideToolbar(){
+        ViewHelper.INSTANCE.hideView(toolbar);
+        ViewHelper.INSTANCE.enterFullScreen(this);
+    }
+
+    public void showToolbar(){
+        ViewHelper.INSTANCE.showView(toolbar);
+        ViewHelper.INSTANCE.quitFullScreen(this);
+    }
 
     @Override
     protected void onNewIntent(Intent intent) {
@@ -179,10 +219,7 @@ public class ViewComicsActivity extends AppCompatActivity {
         handleIntent(intent);
     }
 
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-        super.onConfigurationChanged(newConfig);
-
+    public void changeForScreenRotated(Configuration newConfig){
         switch (newConfig.orientation){
             case Configuration.ORIENTATION_LANDSCAPE:
                 ViewHelper.INSTANCE.setLandScape(true);
@@ -194,13 +231,27 @@ public class ViewComicsActivity extends AppCompatActivity {
 
             default:
                 Log.e(TAG, "undefined value");
+                ViewHelper.INSTANCE.setLandScape(true);
                 break;
         }
+    }
+
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+
+        changeForScreenRotated(newConfig);
+//        ViewHelper.INSTANCE.init(this);
         // 重新加载图片
-        ViewHelper.INSTANCE.init(this);
         pagesViewAdapter.loadPage(pagesViewAdapter.getCurrentPage());
     }
 
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        ViewHelper.INSTANCE.triggerOnActivityResultForGetDocumentPermission(this, requestCode, resultCode, data);
+        super.onActivityResult(requestCode, resultCode, data);
+    }
 
     @Override
     public void onDestroy(){

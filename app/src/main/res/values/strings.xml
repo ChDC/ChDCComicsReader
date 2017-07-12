@@ -3,4 +3,13 @@
     <string name="title_home">Home</string>
     <string name="title_dashboard">Dashboard</string>
     <string name="title_notifications">Notifications</string>
+    <string name="msg_lastchapter">This is already the last chapter!</string>
+    <string name="msg_firstchapter">This is already the first chapter!</string>
+    <string name="msg_emptychapter">This is empty chapter!</string>
+    <string name="title_deletechapter">Delete Chapter</string>
+    <string name="msg_affirm_delete_chapter">Confirm to delete the chapter: %s?</string>
+    <string name="title_ok">OK</string>
+    <string name="title_cancel">Cancel</string>
+    <string name="msg_emptybook">The book is empty!</string>
+    <string name="msg_fail_to_delete">Fail to delete! Please check the permission of write to file system!</string>
 </resources>

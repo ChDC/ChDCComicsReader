@@ -34,20 +34,22 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
 
     private static final String TAG = "PagesViewAdapter";
 
-    Context context;
-    RecyclerView owner;
-    ExecutorService pool;
+    private Context context;
+    private RecyclerView owner;
+    private ExecutorService pool;
 
     private Book book;
     private Page startPage;
 
-    SparseArray<Page> pageCache;
-    int cachePageNumber = 2; // 缓存两个图片
-    BlockingQueue<Page> loadBitmapQueue = new LinkedBlockingQueue<>(20);
+    private SparseArray<Page> pageCache;
+    private int cachePageNumber = 2; // 缓存两个图片
+    private BlockingQueue<Page> loadBitmapQueue = new LinkedBlockingQueue<>(20);
 
-    boolean isStartPageLoaded = false;
-    boolean isLockedForChangeBackEnd = false;
-    boolean isLockedForChangeFrontEnd = false;
+    private boolean isStartPageLoaded = false;
+    private boolean isLockedForChangeBackEnd = false;
+    private boolean isLockedForChangeFrontEnd = false;
+
+    private Handler handler = new Handler();
 
     // 元素数量
     private int itemCount = 0;
@@ -80,27 +82,16 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         return holder;
     }
 
-    public Direction getDirection(int position){
+    private Direction getDirection(int position){
 
         int firstPosition = ((LinearLayoutManager)owner.getLayoutManager()).findFirstVisibleItemPosition();
-        if(firstPosition < 0)
+        if(firstPosition < 0 || firstPosition == position)
             return Direction.CURRENT;
         else if(position < firstPosition)
             return Direction.LAST;
         else  if(position > firstPosition)
             return Direction.NEXT;
         return null;
-
-//        Direction direction;
-//        PageHolder last = (PageHolder) this.owner.findViewHolderForLayoutPosition(position - 1);
-//        PageHolder next = (PageHolder) this.owner.findViewHolderForLayoutPosition(position + 1);
-//        if(last == null && next != null)
-//            direction = Direction.LAST;
-//        else if(last != null && next == null)
-//            direction = Direction.NEXT;
-//        else
-//            direction = Direction.CURRENT;
-//        return direction;
     }
 
     @Override
@@ -115,49 +106,13 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
             switch (direction){
                 case LAST:
                     PageHolder next = (PageHolder) this.owner.findViewHolderForLayoutPosition(position + 1);
-                    page = book.getLastPage(next.getPage());
-                    if(page == null){
-                        // 更新移动缓存中的键
-                        if(!isLockedForChangeFrontEnd) {
-                            isLockedForChangeFrontEnd = true;
-                            int offset = - position - 1;
-                            new Handler().post(() -> {
-                                try {
-                                    offsetAllKeysInCache(offset);
-                                    this.itemCount += offset;
-                                    this.notifyDataSetChanged();
-                                    this.owner.scrollToPosition(0);
-                                    isLockedForChangeFrontEnd = false;
-                                } catch (Exception e1) {
-                                    e1.printStackTrace();
-                                }
-                            });
-                        }
-                        setBlankHolder(holder);
-                        Log.d(TAG, "前面没有了");
-                        return;
-                    }
+                    if(next != null)
+                        page = book.getLastPage(next.getPage());
                     break;
                 case NEXT:
                     PageHolder last = (PageHolder) this.owner.findViewHolderForLayoutPosition(position - 1);
-                    page = book.getNextPage(last.getPage());
-                    if(page == null){
-                        if(!isLockedForChangeBackEnd) {
-                            isLockedForChangeBackEnd = true;
-                            new Handler().post(() -> {
-                                try {
-                                    this.itemCount = position;
-                                    this.notifyDataSetChanged();
-                                    isLockedForChangeBackEnd = false;
-                                } catch (Exception e1) {
-                                    e1.printStackTrace();
-                                }
-                            });
-                            Log.d(TAG, "后面没有了");
-                        }
-                        setBlankHolder(holder);
-                        return;
-                    }
+                    if(last != null)
+                        page = book.getNextPage(last.getPage());
                     break;
                 case CURRENT:
                     if(isStartPageLoaded){
@@ -166,11 +121,17 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                     }
                     page = startPage;
                     isStartPageLoaded = true;
+                    // 缓存 Pages
+                    Page np = page;
+                    pool.submit(() -> cachePages(np, position, Direction.LAST, cachePageNumber));
                     break;
             }
         }
+        if(page == null){
+            setBlankHolder(holder);
+            return;
+        }
 
-//        newViewPosition = position;
         Page np = page;
         holder.setPage(page);
         if(page.isLoadedBitmap())
@@ -186,17 +147,15 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         }
 
         // 缓存 Pages
-        pool.submit(() -> {
-            cachePages(np, position, direction, cachePageNumber);
-        });
+        pool.submit(() -> cachePages(np, position, direction, cachePageNumber));
     }
 
-    void setBlankHolder(PageHolder holder){
+    private void setBlankHolder(PageHolder holder){
         holder.setPage(null);
         holder.setBitmap(ViewHelper.INSTANCE.getBlankPicture());
     }
 
-    public void offsetAllKeysInCache(int offset) throws Exception {
+    private void offsetAllKeysInCache(int offset) throws Exception {
         if(offset > 0)
             return;
         // 获取所有的 Key
@@ -222,7 +181,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
      * @param direction
      * @param count
      */
-    public void cachePages(Page page, int position, Direction direction, int count){
+    private void cachePages(Page page, int position, Direction direction, int count){
         if(page == null)
             return;
         if(direction == Direction.CURRENT)
@@ -231,22 +190,53 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         pageCache.put(position, page);
         for(int i = 0; i < count; i++){
             position += direction == Direction.NEXT ? 1 : -1;
+            if(position < 0 || position >= itemCount)
+                break;
             Page cp = pageCache.get(position);
-            if(cp != null){
+            if(cp != null)
                 page = cp;
-            }
             else{
                 page = direction == Direction.NEXT ? book.getNextPage(page) : book.getLastPage(page);
-                if(page == null)
+                if(page != null)
+                    pageCache.put(position, page);
+                else { //(page == null) {
+                    // 到头了
+                    if(direction == Direction.LAST && !isLockedForChangeFrontEnd) {
+                        isLockedForChangeFrontEnd = true;
+                        int offset = - position - 1;
+                        handler.post(() -> {
+                            try {
+                                offsetAllKeysInCache(offset);
+                                this.itemCount += offset;
+                                this.notifyDataSetChanged();
+                                this.owner.scrollToPosition(0);
+                                isLockedForChangeFrontEnd = false;
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        });
+                    }
+                    else if(direction == Direction.NEXT && !isLockedForChangeBackEnd) {
+                        isLockedForChangeBackEnd = true;
+                        int p = position;
+                        handler.post(() -> {
+                            try {
+                                this.itemCount = p;
+                                this.notifyDataSetChanged();
+                                isLockedForChangeBackEnd = false;
+                            } catch (Exception e1) {
+                                e1.printStackTrace();
+                            }
+                        });
+                    }
                     break;
-                pageCache.put(position, page);
+                }
             }
             try {
                 loadBitmapQueue.put(page);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
-//            page.getBitmap();
         }
     }
 
@@ -290,7 +280,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     }
 
 
-    public void clearCache(){
+    private void clearCache(){
         int size = pageCache.size();
         for(int i = 0; i < size; i++) {
             Page page = pageCache.valueAt(i);
@@ -305,7 +295,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
      * @param position
      * @param direction
      */
-    public void removeCache(int position, Direction direction){
+    private void removeCache(int position, Direction direction){
         if(direction == Direction.CURRENT){
             Page page = pageCache.get(position);
             if(page != null)

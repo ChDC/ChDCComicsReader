@@ -1,9 +1,7 @@
 package com.chdc.comicsreader.book;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -15,6 +13,7 @@ import java.util.regex.Pattern;
 public class File implements Serializable{
 
     public static final Pattern IMAGE_FILE_PATTERN = Pattern.compile(".*\\.(jpg|png|bmp|jpeg|gif)$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern DELETE_FILE_PATTERN = Pattern.compile(".*\\.(jpg|png|bmp|jpeg|gif)$", Pattern.CASE_INSENSITIVE);
 
     protected File parent;
     protected List<File> children;
@@ -28,7 +27,8 @@ public class File implements Serializable{
     }
 
     public boolean delete() {
-        return this.getFileImplement().delete(url);
+        // 只删除目录中的图片，如果删除后目录为空则删除空目录
+        return this.getFileImplement().delete(url, DELETE_FILE_PATTERN, false, true);
     }
 
     public boolean isCacheParent() {
@@ -90,7 +90,7 @@ public class File implements Serializable{
 
         FileImplement fileImplement = this.getFileImplement();
         String[] files = fileImplement.getFiles(url, IMAGE_FILE_PATTERN);
-        String[] dirs = fileImplement.getDirectories(url);
+        String[] dirs = fileImplement.getDirectories(url, null);
         // TODO: 汉语排序，如汉语中的 章节一，章节二，
         // TODO: 数字序号排序，如 001 排在 02 前面
         Arrays.sort(files, String.CASE_INSENSITIVE_ORDER);
@@ -223,7 +223,6 @@ public class File implements Serializable{
     public boolean isValid(){
         return this.getFileImplement().exists(url);
     }
-
 
     @Override
     public boolean equals(Object obj) {
