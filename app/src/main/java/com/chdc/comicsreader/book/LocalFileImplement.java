@@ -217,7 +217,7 @@ public class LocalFileImplement extends FileImplement {
                     // 后根遍历
                     behindOrderTraverseDocumentFile(file, f -> {
                         if(f.isDirectory()) {
-                            if (deleteEmptyDirectory)
+                            if (deleteEmptyDirectory && f.listFiles().length == 0)
                                 f.delete();
                         }
                         else if(filter.matcher(f.getName()).find())
@@ -245,7 +245,7 @@ public class LocalFileImplement extends FileImplement {
                         if(!f.delete())
                             result = false;
                 }
-                if(deleteEmptyDirectory)
+                if(deleteEmptyDirectory && file.listFiles().length == 0)
                     file.delete(); // 如果不为空则删除失败
                 return result;
             }
@@ -258,10 +258,11 @@ public class LocalFileImplement extends FileImplement {
                         for(DocumentFile f : fs)
                             if(f.isFile() && filter.matcher(f.getName()).find())
                                 f.delete();
-                        if(deleteEmptyDirectory)
-                            file.delete(); // 如果不为空则删除失败
-                        // 将名字改回来
-                        file.renameTo(originName);
+                        if(deleteEmptyDirectory && file.listFiles().length == 0)
+                            file.delete();
+                        else
+                            // 将名字改回来
+                            file.renameTo(originName);
                     }).start();
                 return result;
             }
@@ -276,8 +277,8 @@ public class LocalFileImplement extends FileImplement {
         if(file.isFile()) {
             // delete file
             result = file.delete();
-            if(deleteEmptyDirectory) // && isEmpty(file.getParent()))
-                file.getParentFile().delete();// 如果不为空则删除失败
+            if(deleteEmptyDirectory  && file.getParentFile().listFiles().length == 0)
+                file.getParentFile().delete();
         }
         else if(file.isDirectory())
             result = deleteDocumentDirectory( file, filter, recursion, deleteEmptyDirectory);
@@ -286,19 +287,23 @@ public class LocalFileImplement extends FileImplement {
 
     @Override
     public boolean delete(String url, Pattern filter, boolean recursion, boolean deleteEmptyDirectory) {
-        boolean result = false;
-        File file = new File(url);
-        if(ViewHelper.INSTANCE.includeByExternalSDCard(url))
-            return deleteDocumentFile(file, filter, recursion, deleteEmptyDirectory);
-        if(file.isFile()) {
-            // delete file
-            result = file.delete();
-            if(deleteEmptyDirectory) // && isEmpty(file.getParent()))
-                new File(file.getParent()).delete();// 如果不为空则删除失败
+        try {
+            boolean result = false;
+            File file = new File(url);
+            if (ViewHelper.INSTANCE.includeByExternalSDCard(url))
+                return deleteDocumentFile(file, filter, recursion, deleteEmptyDirectory);
+            if (file.isFile()) {
+                // delete file
+                result = file.delete();
+                if (deleteEmptyDirectory) // && isEmpty(file.getParent()))
+                    new File(file.getParent()).delete();// 如果不为空则删除失败
+            } else if (file.isDirectory())
+                result = deleteDirectory(url, filter, recursion, deleteEmptyDirectory);
+            return result;
         }
-        else if(file.isDirectory())
-            result = deleteDirectory(url, filter, recursion, deleteEmptyDirectory);
-        return result;
+        catch (Exception e){
+            return false;
+        }
     }
 
     @Override
