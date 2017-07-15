@@ -369,6 +369,10 @@ public class ViewHelper {
         activity.getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,  WindowManager.LayoutParams.FLAG_FULLSCREEN);
     }
 
+//    public File getTempFile(String prefix, String suffix) throws IOException {
+//        return App.getContext().getCacheDir().createTempFile(prefix, suffix);
+//    }
+
 //    public String[] getSDCardPaths(){
 //        if(sdcardPaths == null){
 //            sdcardPaths = getAllExtSdCardPaths();

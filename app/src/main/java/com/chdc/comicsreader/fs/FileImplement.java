@@ -1,6 +1,7 @@
-package com.chdc.comicsreader.book;
+package com.chdc.comicsreader.fs;
 
 import java.io.InputStream;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -17,18 +18,21 @@ public abstract class FileImplement {
     public abstract String getParent(String url);
 
     /**
-     * 获取目录
+     * 获取孩子
      * @param url
-     * @return
+     * @param fileFilter 过滤文件的模式
+     * @param dirBlockFilter 目录黑名单
+     * @param archivePattern 压缩文件
+     * @return 含有三个元素的数组，以此是 文件，目录，压缩文件
      */
-    public abstract String[] getDirectories(String url, Pattern filter);
+    public abstract String[][] getChildren(String url, Pattern fileFilter, Pattern dirBlockFilter, Pattern archivePattern);
 
     /**
-     * 获取文件
+     * 获取文件名
      * @param url
      * @return
      */
-    public abstract String[] getFiles(String url, Pattern filter);
+    public abstract String getName(String url);
 
     /**
      * 删除文件
@@ -68,6 +72,8 @@ public abstract class FileImplement {
      * @return
      */
     public static FileImplement getFileImplementByURLType(String url){
+        if(url == null)
+            return null;
         if(url.startsWith("/"))
             return LocalFileImplement.INSTANCE;
         return null;

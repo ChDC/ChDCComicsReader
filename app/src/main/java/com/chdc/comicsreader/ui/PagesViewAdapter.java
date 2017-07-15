@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.os.Handler;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.util.Log;
 import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -21,7 +20,6 @@ import com.chdc.comicsreader.book.Page;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.LinkedBlockingQueue;
@@ -253,7 +251,8 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     public boolean loadPage(Page page){
         // clear
         this.clear();
-        page.clear();
+        if(page != null)
+            page.clear();
         startPage = page;
 
         this.setItemCount(Integer.MAX_VALUE);
@@ -407,7 +406,7 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
 
         public void showTitle(){
             try {
-                String title = page.getParent().getUrl().replace(book.getUrl(), "");
+                String title = page.getParent().getURL().replace(book.getURL(), "");
                 textView.setText(title);
                 if(textView.getVisibility() == View.GONE) {
                     textView.setVisibility(View.VISIBLE);

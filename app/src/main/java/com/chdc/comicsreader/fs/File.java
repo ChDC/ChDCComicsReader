@@ -1,7 +1,11 @@
-package com.chdc.comicsreader.book;
+package com.chdc.comicsreader.fs;
+
+import com.chdc.comicsreader.book.Page;
 
 import java.io.Serializable;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -12,18 +16,38 @@ import java.util.regex.Pattern;
 
 public class File implements Serializable{
 
+
+    public interface Visitor {
+        boolean visit(File file);
+        Object getResult();
+    }
+
     public static final Pattern IMAGE_FILE_PATTERN = Pattern.compile(".*\\.(jpg|png|bmp|jpeg|gif)$", Pattern.CASE_INSENSITIVE);
     public static final Pattern DELETE_FILE_PATTERN = Pattern.compile(".*\\.(jpg|png|bmp|jpeg|gif)$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern BLOCK_DIRECTORY_PATTERN = Pattern.compile("^$", Pattern.CASE_INSENSITIVE);
+    public static final Pattern ARCHIVE_FILE_PATTERN = Pattern.compile(".*\\.(rar)$", Pattern.CASE_INSENSITIVE);
 
     protected File parent;
     protected List<File> children;
     protected boolean cacheParent = false;
     protected boolean cacheChildren = false;
 
-    public FileImplement getFileImplement() {
+    protected String name;
+    protected String url;
+    protected FileImplement fileImplement;
+
+    public File(String url){
+        this.url = url;
+    }
+
+    protected FileImplement getFileImplement() {
         if(fileImplement == null)
             fileImplement = FileImplement.getFileImplementByURLType(this.url);
         return fileImplement;
+    }
+
+    public void setFileImplement(FileImplement fileImplement){
+        this.fileImplement = fileImplement;
     }
 
     public boolean delete() {
@@ -47,30 +71,15 @@ public class File implements Serializable{
         this.cacheChildren = cacheChildren;
     }
 
-    public interface Visitor {
-        boolean visit(File file);
-        Object getResult();
+    public String getName() {
+        if(name == null)
+            name = getFileImplement().getName(url);
+        return name;
     }
 
-    protected String title;
-    protected String url;
-    private FileImplement fileImplement;
 
-    public File(String url){
-        this.url = url;
-    }
-
-    public String getTitle(){
-        return title;
-    }
-
-    public String getUrl() {
+    public String getURL() {
         return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-        this.fileImplement = null;
     }
 
     public File getParent(){
@@ -88,32 +97,41 @@ public class File implements Serializable{
         if(url == null)
             return null;
 
-        FileImplement fileImplement = this.getFileImplement();
-        String[] files = fileImplement.getFiles(url, IMAGE_FILE_PATTERN);
-        String[] dirs = fileImplement.getDirectories(url, null);
-        // TODO: 汉语排序，如汉语中的 章节一，章节二，
-        // TODO: 数字序号排序，如 001 排在 02 前面
-        Arrays.sort(files, String.CASE_INSENSITIVE_ORDER);
-        Arrays.sort(dirs, String.CASE_INSENSITIVE_ORDER);
-
-        File[] result = new File[dirs.length + files.length];
-        int i;
-        for(i = 0; i < files.length; i++) {
-            Page page = new Page(files[i]);
+        String[][] result = this.getFileImplement().getChildren(url, IMAGE_FILE_PATTERN, BLOCK_DIRECTORY_PATTERN, ARCHIVE_FILE_PATTERN);
+        List<Page> files = new ArrayList<>(result[0].length);
+        for(String s: result[0]) {
+            Page page = new Page(s);
             page.parent = this;
             page.setPageType(Page.PageType.NotEnd);
-            result[i] = page;
+            files.add(page);
         }
-        if(files.length > 0){
-            ((Page)result[files.length - 1]).setPageType(Page.PageType.TailEnd);
-            ((Page)result[0]).setPageType(Page.PageType.HeadEnd);
-        }
-        for(i = 0; i < dirs.length; i++){
-            File file = new File(dirs[i]);
+
+        List<File> dirs = new ArrayList<>(result[1].length + result[2].length);
+        for(String s : result[1]){
+            File file = new File(s);
             file.parent = this;
-            result[i + files.length] = file;
+            dirs.add(file);
         }
-        List<File> cs = Arrays.asList(result);
+        for(String s : result[2]){
+            ArchiveBridgeFile file = ArchiveBridgeFile.getArchiveBridgeFile(s);
+            file.parent = this;
+            dirs.add(file);
+        }
+
+        // TODO: 汉语排序，如汉语中的 章节一，章节二，
+        // TODO: 数字序号排序，如 001 排在 02 前面
+        Collections.sort(files, ((f1, f2) -> String.CASE_INSENSITIVE_ORDER.compare(f1.getName(), f2.getName())));
+        Collections.sort(dirs, (f1, f2) -> String.CASE_INSENSITIVE_ORDER.compare(f1.getName(), f2.getName()));
+
+        // 设置 Page 的头尾，必须在 Sort 之后设置
+        if(files.size() > 0){
+            files.get(files.size() - 1).setPageType(Page.PageType.TailEnd);
+            files.get(0).setPageType(Page.PageType.HeadEnd);
+        }
+
+        List<File> cs = new ArrayList<>(files.size() + dirs.size());
+        cs.addAll(files);
+        cs.addAll(dirs);
         if(cacheChildren)
             children = cs;
         return cs;
@@ -191,7 +209,7 @@ public class File implements Serializable{
         return this.getEndPage(true);
     }
 
-    private Page getEndPage(boolean reversed){
+    protected Page getEndPage(boolean reversed){
         if(this instanceof Page)
             return (Page)this;
 

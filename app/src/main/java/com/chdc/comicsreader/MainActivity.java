@@ -12,6 +12,7 @@ import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
 import com.chdc.comicsreader.ui.ViewComicsActivity;
 
+
 public class MainActivity extends AppCompatActivity {
 
     private TextView mTextMessage;
@@ -47,16 +48,16 @@ public class MainActivity extends AppCompatActivity {
         navigation.setOnNavigationItemSelectedListener(mOnNavigationItemSelectedListener);
 
         test();
+//        testZip();
     }
 
     public void test(){
 
-        Book book = new Book("/storage/sdcard1/ChDC/Else/Material/头像");
-        Page page = new Page("/storage/sdcard1/ChDC/Else/Material/头像/head01.jpg");
+        Book book = new Book("/storage/emulated/0/test");
         Bundle bundle = new Bundle();
         // 传入一个 Book
         bundle.putSerializable("book", book);
-        bundle.putSerializable("startPage", page);
+//        bundle.putSerializable("startPage", page);
 
         Intent i = new Intent(MainActivity.this, ViewComicsActivity.class);
         i.putExtras(bundle);

@@ -1,6 +1,7 @@
 package com.chdc.comicsreader.book;
 
-import com.chdc.comicsreader.utils.ViewHelper;
+import com.chdc.comicsreader.fs.File;
+import com.chdc.comicsreader.fs.FileImplement;
 
 import java.util.List;
 import java.util.Objects;
@@ -9,13 +10,13 @@ import java.util.Objects;
  * Created by Wen on 2017/7/6.
  */
 
-public class Book extends File{
+public class Book extends File {
 
 
     public static Book getBookByImageURL(String url){
         if(url == null)
             return null;
-        FileImplement fi = new File(url).getFileImplement();
+        FileImplement fi = FileImplement.getFileImplementByURLType(url);
         if(fi == null)
             return null;
         return new Book(fi.getRootPath(url));
@@ -32,7 +33,7 @@ public class Book extends File{
      * @return
      */
     protected Page getSiblingPage(File file, int direction, boolean willGetHeadEndPage){
-        while(file != null && !Objects.equals(file.getUrl(), this.url)){
+        while(file != null && !Objects.equals(file.getURL(), this.url)){
             File sibling = file.getSibling(direction >= 0 ? 1 : -1 );
             if(sibling == null){
                 file = file.getParent();

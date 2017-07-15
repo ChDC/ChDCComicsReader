@@ -91,7 +91,7 @@ public class ViewComicsActivity extends AppCompatActivity {
                         try {
                             PagesViewAdapter.PageHolder vh = (PagesViewAdapter.PageHolder) pagesView.findViewHolderForAdapterPosition(position);
                             Page cp = vh.getPage();
-                            Intent intent = ViewHelper.INSTANCE.getImageFileIntent(cp.getCacheedFile());
+                            Intent intent = ViewHelper.INSTANCE.getImageFileIntent(cp.getCachedFile());
                             startActivity(intent);
                         }
                         catch (Exception e){
@@ -137,7 +137,7 @@ public class ViewComicsActivity extends AppCompatActivity {
             // 创建 AlertDialog.Builder 对象
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(getString(R.string.title_deletechapter));
-            builder.setMessage(String.format(getString(R.string.msg_affirm_delete_chapter), cp.getParent().getUrl()));
+            builder.setMessage(String.format(getString(R.string.msg_affirm_delete_chapter), cp.getParent().getURL()));
             builder.setPositiveButton(R.string.title_ok, (d, i) -> {
                 try{
                     Page np = book.getNextChapterPage(cp);
@@ -148,7 +148,7 @@ public class ViewComicsActivity extends AppCompatActivity {
                     if(!success){
                         ViewHelper.INSTANCE.showMessage(getString(R.string.msg_fail_to_delete));
                         // 检查是否是外部存储卡，如果是就请求权限
-                        if(ViewHelper.INSTANCE.includeByExternalSDCard(cp.getUrl()))
+                        if(ViewHelper.INSTANCE.includeByExternalSDCard(cp.getURL()))
                             ViewHelper.INSTANCE.requestDocumentPermission(this);
                         return;
                     }
@@ -177,17 +177,17 @@ public class ViewComicsActivity extends AppCompatActivity {
 
         Page startPage;
         if(Intent.ACTION_VIEW.equals(action)){
+            // 从文件中打开
             String file =  ViewHelper.INSTANCE.getPath(intent.getData());
             book = Book.getBookByImageURL(file);
             startPage = new Page(file);
         }
         else{
+            // 从其他 Activivy 中打开
             Bundle bundle = intent.getExtras();
             book = (Book)bundle.getSerializable("book");
             startPage = (Page)bundle.getSerializable("startPage");
         }
-
-
 
         if(pagesViewAdapter != null) {
             pagesViewAdapter.setBook(book);

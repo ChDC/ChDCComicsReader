@@ -1,15 +1,16 @@
-package com.chdc.comicsreader.book;
+package com.chdc.comicsreader.fs;
 
 import android.support.v4.provider.DocumentFile;
 
 import com.chdc.comicsreader.utils.ViewHelper;
 
-import org.w3c.dom.Document;
-
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.io.File;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.regex.Pattern;
 
 /**
@@ -35,47 +36,42 @@ public class LocalFileImplement extends FileImplement {
     }
 
     @Override
-    public String[] getDirectories(String url, Pattern pattern) {
-//        Log.d(TAG, "getDirectories");
-        File file = new File(url);
+    public String[][] getChildren(String url, Pattern fileFilter, Pattern dirBlockFilter, Pattern archivePattern){
+        List<String> files = new ArrayList<>();
+        List<String> dirs = new ArrayList<>();
+        List<String> archives = new ArrayList<>();
+
         try {
-            File[] files;
-            if(pattern != null)
-                files = file.listFiles(f -> f.isDirectory() && !f.getName().endsWith(DELETE_TAG) && pattern.matcher(f.getName()).find());
-            else
-                files = file.listFiles(f -> f.isDirectory() && !f.getName().endsWith(DELETE_TAG));
-//            if(files == null)
-//                return new String[0];
-            String[] result = new String[files.length];
-            for(int i = 0; i < result.length; i++)
-                result[i] = files[i].toString();
-            return result;
+            File file = new File(url);
+            for (File f : file.listFiles()){
+                if(f.isDirectory()){
+                    String fName = f.getName();
+                    if(!fName.endsWith(DELETE_TAG) && (dirBlockFilter == null || !dirBlockFilter.matcher(fName).find()))
+                        dirs.add(f.getPath());
+                }
+                else if (f.isFile()){
+                    String fName = f.getName();
+                    if(fileFilter == null || fileFilter.matcher(fName).find())
+                        files.add(f.getPath());
+                    if(archivePattern != null && archivePattern.matcher(fName).find())
+                        archives.add(f.getPath());
+                }
+            }
         }
         catch (Exception e){
-            return new String[0];
+
         }
+
+        return new String[][]{
+            Arrays.copyOf(files.toArray(), files.size(), String[].class),
+            Arrays.copyOf(dirs.toArray(), dirs.size(), String[].class),
+            Arrays.copyOf(archives.toArray(), archives.size(), String[].class),
+        };
     }
 
     @Override
-    public String[] getFiles(String url, final Pattern pattern) {
-//        Log.d(TAG, "getFiles");
-        File file = new File(url);
-        try {
-            File[] files;
-            if(pattern != null)
-                files = file.listFiles(f -> f.isFile() && pattern.matcher(f.getName()).find());
-            else
-                files = file.listFiles(File::isFile);
-//            if(files == null)
-//                return new String[0];
-            String[] result = new String[files.length];
-            for(int i = 0; i < result.length; i++)
-                result[i] = files[i].toString();
-            return result;
-        }
-        catch (Exception e){
-            return new String[0];
-        }
+    public String getName(String url) {
+        return new File(url).getName();
     }
 
     /**

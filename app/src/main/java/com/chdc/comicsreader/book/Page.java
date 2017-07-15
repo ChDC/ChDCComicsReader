@@ -3,6 +3,7 @@ package com.chdc.comicsreader.book;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 
+import com.chdc.comicsreader.fs.File;
 import com.chdc.comicsreader.utils.ViewHelper;
 
 import java.io.InputStream;
@@ -25,8 +26,14 @@ public class Page extends File{
             pageType = PageType.HeadEnd;
         else{
             int i = childrenOfParent.indexOf(this);
-            if(i >= 0)
-                pageType = ((Page)childrenOfParent.get(i)).getPageType();
+            if(i < 0)
+                return PageType.Unknown;
+            if(i == 0)
+                pageType = PageType.HeadEnd;
+            else if (i + 1 < childrenOfParent.size() && !(childrenOfParent.get(i+1) instanceof Page))
+                pageType = PageType.TailEnd;
+            else
+                pageType = PageType.NotEnd;
         }
         return pageType;
     }
@@ -55,9 +62,9 @@ public class Page extends File{
         TailEnd,
     }
 
-    private Bitmap bitmap;
-    private boolean cannotLoadBitmap = false;
-    private PageType pageType = PageType.Unknown;
+    protected Bitmap bitmap;
+    protected boolean cannotLoadBitmap = false;
+    protected PageType pageType = PageType.Unknown;
 
     public Page(String url){
         super(url);
@@ -95,12 +102,12 @@ public class Page extends File{
         File p = super.getParent();
         if(p == null)
             return null;
-        p.cacheChildren = true;
+        p.setCacheChildren(true);
         return p;
     }
 
     @Override
-    public List<com.chdc.comicsreader.book.File> getChildren() {
+    public List<File> getChildren() {
         return null;
     }
 
@@ -139,7 +146,7 @@ public class Page extends File{
     }
 
 
-    public java.io.File getCacheedFile(){
+    public java.io.File getCachedFile(){
         return this.getFileImplement().cacheFile(url);
     }
 }
