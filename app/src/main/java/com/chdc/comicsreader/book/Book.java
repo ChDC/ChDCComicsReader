@@ -77,7 +77,7 @@ public class Book extends File {
 
     public Page getLastChapterPage(File page){
         // 考虑目录中既有文件又有目录的情况
-        Page p = this.getSiblingPage(page.getParent(), -1, true);
+        Page p = this.getSiblingPage(page.getParent(), -1, false);
         if(p == null)
             return null;
         // 如果有后继表明不是最后一个

@@ -2,7 +2,6 @@ package com.chdc.comicsreader.archive;
 
 import java.util.Iterator;
 import java.util.List;
-import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
 /**
@@ -26,10 +25,12 @@ public abstract class ArchiveImplement {
         return null;
     }
 
-    public abstract Archive createArchive(String file);
+    public abstract Archive createArchive(String file, String password) throws PasswordIsWrongException;
 
 
     public List<FileHeader> listFiles(Archive archive, Pattern fileFilter){
+        if(archive == null)
+            return null;
         List<FileHeader> files =  archive.listFiles();
         if(fileFilter != null){
             Iterator<FileHeader> it = files.iterator();

@@ -11,7 +11,7 @@ import java.util.List;
 
 public interface Archive extends Closeable {
 
-    boolean extractFile(FileHeader fileHeader, OutputStream outputStream);
+    boolean extractFile(FileHeader fileHeader, OutputStream outputStream) throws PasswordIsWrongException;
 
     List<FileHeader> listFiles();
 

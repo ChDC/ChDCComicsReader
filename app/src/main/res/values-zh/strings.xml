@@ -10,4 +10,5 @@
     <string name="title_ok">确定</string>
     <string name="msg_emptybook">本书为空！</string>
     <string name="msg_fail_to_delete">删除失败，请检查是否有写权限！</string>
+    <string name="msg_input_password">请输入密码</string>
 </resources>

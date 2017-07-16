@@ -3,6 +3,7 @@ package com.chdc.comicsreader.ui;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -10,6 +11,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
+import android.widget.EditText;
 
 import com.chdc.comicsreader.R;
 import com.chdc.comicsreader.archive.ArchiveFile;
@@ -26,6 +28,7 @@ import java.util.concurrent.Executors;
 
 public class ViewComicsActivity extends AppCompatActivity {
 
+    Handler handler = new Handler();
     private static final String TAG = "ViewComicsActivity";
     RecyclerView pagesView;
     PagesViewAdapter pagesViewAdapter;
@@ -57,6 +60,22 @@ public class ViewComicsActivity extends AppCompatActivity {
         pagesViewAdapter = new PagesViewAdapter(this, pagesView, pool);
         pagesView.setAdapter(pagesViewAdapter);
         toolbar = findViewById(R.id.toolbar);
+
+        ArchiveBridgeFile.setPasswordIsWrongListener(abf -> handler.post(() ->{
+            // 密码错误
+            // 重新输入密码，然后重新加载
+            final EditText input = new EditText(this);
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle(R.string.msg_input_password);
+            builder.setView(input);
+            builder.setNegativeButton(R.string.title_cancel, null);
+            builder.setPositiveButton(R.string.title_ok, (d,i) -> {
+                String password = input.getText().toString().trim();
+                abf.setPassword(password);
+                pagesViewAdapter.loadPage(abf.getHeadEndPage());
+            });
+                builder.create().show();
+        }));
 
         findViewById(R.id.btnRotateScreen).setOnClickListener(v -> {
             switch (getResources().getConfiguration().orientation){

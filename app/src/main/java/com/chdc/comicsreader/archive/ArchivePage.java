@@ -5,7 +5,6 @@ import com.chdc.comicsreader.fs.ArchiveBridgeFile;
 import com.chdc.comicsreader.fs.File;
 import com.chdc.comicsreader.fs.FileImplement;
 
-import java.io.BufferedInputStream;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.FileOutputStream;
@@ -18,7 +17,7 @@ import java.io.InputStream;
 
 public class ArchivePage extends Page {
 
-    private ArchiveBridgeFile archiveBridgeFile;
+    protected ArchiveBridgeFile archiveBridgeFile;
     protected FileHeader fileHeader;
     protected Archive archive;
     protected java.io.File cachedFile;
@@ -51,6 +50,9 @@ public class ArchivePage extends Page {
                 java.io.File tempFile = java.io.File.createTempFile("archive_", getName());
                 try (FileOutputStream fos = new FileOutputStream(tempFile)) {
                     archive.extractFile(fileHeader, fos);
+                } catch (PasswordIsWrongException e) {
+                    this.archiveBridgeFile.setPasswordIsWrong(true);
+                    return null;
                 }
                 cachedFile = tempFile;
             } catch (IOException e) {
@@ -66,6 +68,10 @@ public class ArchivePage extends Page {
             ByteArrayOutputStream bos = new ByteArrayOutputStream();
             archive.extractFile(fileHeader, bos);
             return new ByteArrayInputStream(bos.toByteArray());
+        }
+        catch (PasswordIsWrongException e){
+            this.archiveBridgeFile.setPasswordIsWrong(true);
+            return null;
         }
         catch (Exception e) {
             return null;

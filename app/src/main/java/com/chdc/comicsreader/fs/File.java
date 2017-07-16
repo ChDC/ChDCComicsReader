@@ -1,6 +1,7 @@
 package com.chdc.comicsreader.fs;
 
 import com.chdc.comicsreader.book.Page;
+import com.chdc.comicsreader.utils.NumberStringComparator;
 
 import java.io.Serializable;
 import java.util.ArrayList;
@@ -93,6 +94,13 @@ public class File implements Serializable{
     public List<File> getChildren(){
         if(children != null)
             return children;
+        return buildChildren();
+    }
+
+    protected synchronized List<File>  buildChildren(){
+        if(children != null)
+            return children;
+
         if(url == null)
             return null;
 
@@ -117,10 +125,8 @@ public class File implements Serializable{
             dirs.add(file);
         }
 
-        // TODO: 汉语排序，如汉语中的 章节一，章节二，
-        // TODO: 数字序号排序，如 001 排在 02 前面
-        Collections.sort(files, ((f1, f2) -> String.CASE_INSENSITIVE_ORDER.compare(f1.getName(), f2.getName())));
-        Collections.sort(dirs, (f1, f2) -> String.CASE_INSENSITIVE_ORDER.compare(f1.getName(), f2.getName()));
+        Collections.sort(files, ((f1, f2) -> NumberStringComparator.INSTANCE.compare(f1.getName(), f2.getName())));
+        Collections.sort(dirs, (f1, f2) -> NumberStringComparator.INSTANCE.compare(f1.getName(), f2.getName()));
 
         // 设置 Page 的头尾，必须在 Sort 之后设置
         if(files.size() > 0){
