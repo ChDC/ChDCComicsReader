@@ -1,6 +1,7 @@
 package com.chdc.comicsreader.archive;
 
 import com.chdc.comicsreader.book.Page;
+import com.chdc.comicsreader.fs.ArchiveBridgeFile;
 import com.chdc.comicsreader.fs.File;
 import com.chdc.comicsreader.fs.FileImplement;
 
@@ -16,12 +17,15 @@ import java.io.InputStream;
  */
 
 public class ArchivePage extends Page {
+
+    private ArchiveBridgeFile archiveBridgeFile;
     protected FileHeader fileHeader;
     protected Archive archive;
-    private java.io.File cachedFile;
+    protected java.io.File cachedFile;
 
-    public ArchivePage(String url, Archive archive, FileHeader fileHeader) {
+    public ArchivePage(String url, ArchiveBridgeFile archiveBridgeFile, Archive archive, FileHeader fileHeader) {
         super(url);
+        this.archiveBridgeFile = archiveBridgeFile;
         this.fileHeader = fileHeader;
         this.archive = archive;
     }
@@ -79,5 +83,9 @@ public class ArchivePage extends Page {
 
     public boolean isValid(){
         return fileHeader != null;
+    }
+
+    public ArchiveBridgeFile getArchiveBridgeFile() {
+        return archiveBridgeFile;
     }
 }

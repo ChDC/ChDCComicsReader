@@ -5,7 +5,6 @@ import com.chdc.comicsreader.book.Page;
 import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 import java.util.regex.Pattern;
@@ -236,6 +235,17 @@ public class File implements Serializable{
         };
         this.preOrderTraverseFile(visitor, reversed);
         return (Page)visitor.getResult();
+    }
+
+    public static Page getFirstPageFromFile(String url){
+        String name = FileImplement.getFileImplementByURLType(url).getName(url);
+        if(IMAGE_FILE_PATTERN.matcher(name).find())
+            return new Page(url);
+        else if(ARCHIVE_FILE_PATTERN.matcher(name).find()){
+            ArchiveBridgeFile file = ArchiveBridgeFile.getArchiveBridgeFile(url);
+            return file.getHeadEndPage();
+        }
+        return null;
     }
 
     public boolean isValid(){

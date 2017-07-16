@@ -1,5 +1,6 @@
 package com.chdc.comicsreader.archive;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -31,9 +32,10 @@ public abstract class ArchiveImplement {
     public List<FileHeader> listFiles(Archive archive, Pattern fileFilter){
         List<FileHeader> files =  archive.listFiles();
         if(fileFilter != null){
-            for(FileHeader fh : files){
-                if(!fileFilter.matcher(ArchiveImplement.this.getName(fh.getPath())).find())
-                    files.remove(fh);
+            Iterator<FileHeader> it = files.iterator();
+            while(it.hasNext()){
+                if(!fileFilter.matcher(ArchiveImplement.this.getName(it.next().getPath())).find())
+                    it.remove();
             }
         }
         return files;

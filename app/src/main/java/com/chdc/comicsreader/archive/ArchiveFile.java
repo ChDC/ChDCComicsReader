@@ -33,12 +33,11 @@ public class ArchiveFile extends File {
 
     @Override
     public boolean delete() {
-        return false; // TODO: 删除压缩文件
+        return false;
     }
 
     @Override
     public boolean isValid(){
         return true;
     }
-
 }

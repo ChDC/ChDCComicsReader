@@ -100,7 +100,10 @@ public class ViewHelper {
     }
 
     public boolean includeByExternalSDCard(String url){
-        return url != null && url.startsWith(this.getExternalSDCardPath());
+        String esd = this.getExternalSDCardPath();
+        if(esd == null)
+            return false;
+        return url != null && url.startsWith(esd);
     }
 
     public DocumentFile getDocumentFile(File file, final boolean isDirectory) {

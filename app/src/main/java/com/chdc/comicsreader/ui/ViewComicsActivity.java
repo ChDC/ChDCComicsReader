@@ -12,6 +12,10 @@ import android.util.Log;
 import android.view.View;
 
 import com.chdc.comicsreader.R;
+import com.chdc.comicsreader.archive.ArchiveFile;
+import com.chdc.comicsreader.archive.ArchivePage;
+import com.chdc.comicsreader.fs.ArchiveBridgeFile;
+import com.chdc.comicsreader.fs.File;
 import com.chdc.comicsreader.utils.RecyclerItemClickListener;
 import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
@@ -128,36 +132,29 @@ public class ViewComicsActivity extends AppCompatActivity {
         });
 
         findViewById(R.id.btnDelete).setOnClickListener(v -> {
-            final Page cp = pagesViewAdapter.getCurrentPage();
+            File cp = pagesViewAdapter.getCurrentPage();
             if(cp == null || cp.getParent() == null){
                 ViewHelper.INSTANCE.showMessage(getString(R.string.msg_emptychapter));
                 return;
             }
+            // 如果是压缩文件
+            String title;
+            if(cp instanceof ArchivePage) {
+                cp = ((ArchivePage) cp).getArchiveBridgeFile();
+                title = cp.getURL();
+            }
+            else {
+                title = cp.getParent().getURL();
+            }
+            final File currentFile = cp;
 
             // 创建 AlertDialog.Builder 对象
             final AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle(getString(R.string.title_deletechapter));
-            builder.setMessage(String.format(getString(R.string.msg_affirm_delete_chapter), cp.getParent().getURL()));
+            builder.setMessage(String.format(getString(R.string.msg_affirm_delete_chapter), title));
             builder.setPositiveButton(R.string.title_ok, (d, i) -> {
                 try{
-                    Page np = book.getNextChapterPage(cp);
-                    if(np == null)
-                        np = book.getLastPage(cp);
-                    // 删除本章
-                    boolean success = cp.getParent().delete();
-                    if(!success){
-                        ViewHelper.INSTANCE.showMessage(getString(R.string.msg_fail_to_delete));
-                        // 检查是否是外部存储卡，如果是就请求权限
-                        if(ViewHelper.INSTANCE.includeByExternalSDCard(cp.getURL()))
-                            ViewHelper.INSTANCE.requestDocumentPermission(this);
-                        return;
-                    }
-                    if(np == null){
-                        finishForEmpty();
-                        return;
-                    }
-                    // 加载下一章
-                    pagesViewAdapter.loadPage(np);
+                    deleteChapter(currentFile);
                 }
                 catch (Exception e){
                     e.printStackTrace();
@@ -170,6 +167,29 @@ public class ViewComicsActivity extends AppCompatActivity {
         });
     }
 
+    public void deleteChapter(File chapter){
+
+        Page np = book.getNextChapterPage(chapter);
+        if(np == null)
+            np = book.getLastChapterPage(chapter);
+
+        // 删除本章
+        boolean success = chapter instanceof Page ? chapter.getParent().delete() : chapter.delete();
+        if(!success){
+            ViewHelper.INSTANCE.showMessage(getString(R.string.msg_fail_to_delete));
+            // 检查是否是外部存储卡，如果是就请求权限
+            if(ViewHelper.INSTANCE.includeByExternalSDCard(chapter.getURL()))
+                ViewHelper.INSTANCE.requestDocumentPermission(this);
+            return;
+        }
+        if(np == null){
+            finishForEmpty();
+            return;
+        }
+        // 加载下一章
+        pagesViewAdapter.loadPage(np);
+    }
+
     public void handleIntent(Intent intent){
         if(intent == null)
             return;
@@ -180,7 +200,7 @@ public class ViewComicsActivity extends AppCompatActivity {
             // 从文件中打开
             String file =  ViewHelper.INSTANCE.getPath(intent.getData());
             book = Book.getBookByImageURL(file);
-            startPage = new Page(file);
+            startPage = File.getFirstPageFromFile(file);
         }
         else{
             // 从其他 Activivy 中打开

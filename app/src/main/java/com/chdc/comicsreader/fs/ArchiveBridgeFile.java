@@ -17,7 +17,7 @@ import java.util.Map;
  * Created by Wen on 2017/7/14.
  */
 
-public class ArchiveBridgeFile extends File{
+public class ArchiveBridgeFile extends File {
 
     private Archive archive;
     private boolean builtFileTree = false;
@@ -52,7 +52,7 @@ public class ArchiveBridgeFile extends File{
     }
 
     private ArchivePage newArchivePage(File parent, String path, String name, Archive archive, FileHeader fileHeader){
-        ArchivePage ap = new ArchivePage(path, archive, fileHeader);
+        ArchivePage ap = new ArchivePage(path, this, archive, fileHeader);
         ap.name = name;
 
         ap.cacheParent = true;

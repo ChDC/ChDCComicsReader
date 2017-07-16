@@ -57,19 +57,25 @@ public class Book extends File {
         return this.getSiblingPage(page, -1, false);
     }
 
-    public Page getNextChapterPage(Page page){
-        // 考虑目录中既有文件又有目录的情况
-        List<File> childrenOfParent = page.getParent().getChildren();
-        int i = -1;
-        for(File file : childrenOfParent){
-            if(!(file instanceof Page))
-                break;
-            i++;
+    public Page getNextChapterPage(File page){
+        if(page instanceof Page) {
+            // 考虑目录中既有文件又有目录的情况
+            List<File> childrenOfParent = page.getParent().getChildren();
+            int i = -1;
+            for (File file : childrenOfParent) {
+                if (!(file instanceof Page))
+                    break;
+                i++;
+            }
+            return this.getSiblingPage(childrenOfParent.get(i), 1, true);
         }
-        return this.getSiblingPage(childrenOfParent.get(i), 1, true);
+        else{
+            // 目录
+            return this.getSiblingPage(page, 1, true);
+        }
     }
 
-    public Page getLastChapterPage(Page page){
+    public Page getLastChapterPage(File page){
         // 考虑目录中既有文件又有目录的情况
         Page p = this.getSiblingPage(page.getParent(), -1, true);
         if(p == null)

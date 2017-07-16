@@ -1,5 +1,7 @@
 package com.chdc.comicsreader.archive;
 
+import android.os.Environment;
+
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
@@ -22,13 +24,15 @@ public class RARArchive implements com.chdc.comicsreader.archive.Archive {
     }
 
     @Override
-    public boolean extractFile(com.chdc.comicsreader.archive.FileHeader fileHeader, OutputStream outputStream) {
+    public synchronized boolean extractFile(com.chdc.comicsreader.archive.FileHeader fileHeader, OutputStream outputStream) {
         if(!(fileHeader instanceof RARFileHeader) || outputStream == null)
             return false;
         RARFileHeader rarFileHeader = (RARFileHeader)fileHeader;
         try {
             rarFile.extractFile(rarFileHeader.getFileHeader(), outputStream);
-        } catch (RarException e) {
+        } catch (Throwable e) {
+            if(e instanceof java.lang.OutOfMemoryError)
+                System.gc();
             e.printStackTrace();
             return false;
         }

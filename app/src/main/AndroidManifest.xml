@@ -35,7 +35,52 @@
             <intent-filter>
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE"/>
                 <data android:mimeType="image/*" />
+            </intent-filter>
+            <intent-filter android:priority="2147483647">
+                <action android:name="android.intent.action.VIEW"/>
+                <category android:name="android.intent.category.DEFAULT"/>
+                <category android:name="android.intent.category.BROWSABLE"/>
+                <data android:host="*"/>
+                <data android:scheme="file"/>
+                <data android:scheme="content"/>
+                <data android:mimeType="application/rar"/>
+                <data android:mimeType="application/zip"/>
+                <data android:mimeType="application/x-cpio"/>
+                <data android:mimeType="application/x-debian-package"/>
+                <data android:mimeType="application/x-gtar"/>
+                <data android:mimeType="application/x-iso9660-image"/>
+                <data android:mimeType="application/x-lha"/>
+                <data android:mimeType="application/x-lzh"/>
+                <data android:mimeType="application/x-lzx"/>
+                <data android:mimeType="application/x-tar"/>
+                <data android:mimeType="application/x-apple-diskimage"/>
+                <data android:mimeType="application/x-zip-compressed"/>
+                <data android:mimeType="application/gnutar"/>
+                <data android:mimeType="application/x-compressed"/>
+                <data android:mimeType="application/x-7z-compressed"/>
+                <data android:mimeType="application/x-ace-compressed"/>
+                <data android:mimeType="application/x-bzip"/>
+                <data android:mimeType="application/x-bzip2"/>
+                <data android:mimeType="application/x-gzip"/>
+                <data android:mimeType="application/x-xz"/>
+                <data android:mimeType="application/vnd.ms-cab-compressed"/>
+                <data android:mimeType="application/x-lzma"/>
+                <data android:mimeType="application/java-archive"/>
+                <data android:mimeType="application/x-rar-compressed"/>
+                <data android:mimeType="application/x-compress"/>
+                <data android:mimeType="application/x-rpm"/>
+                <data android:mimeType="application/gzip"/>
+                <data android:mimeType="application/7z"/>
+                <data android:mimeType="application/gz"/>
+                <data android:mimeType="application/bz"/>
+                <data android:mimeType="application/bz2"/>
+                <data android:mimeType="application/xz"/>
+                <data android:mimeType="application/zipx"/>
+                <data android:mimeType="application/lza"/>
+                <data android:mimeType="application/lzx"/>
+                <data android:mimeType="application/lzma"/>
             </intent-filter>
         </activity>
     </application>
