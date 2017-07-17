@@ -69,6 +69,8 @@ public class File implements Serializable{
 
     public void setCacheParent(boolean cacheParent) {
         this.cacheParent = cacheParent;
+        if(!cacheParent)
+            parent = null;
     }
 
     public boolean isCacheChildren() {
@@ -77,6 +79,8 @@ public class File implements Serializable{
 
     public void setCacheChildren(boolean cacheChildren) {
         this.cacheChildren = cacheChildren;
+        if(!cacheChildren)
+            children = null;
     }
 
     public String getName() {

@@ -118,7 +118,6 @@ public class ArchiveBridgeFile extends File {
             cd.children.add(newArchivePage(cd, Utils.stringJoin("/", paths), fileName, getArchive(), fh));
         }
 
-        // TODO: 对目录文件进行排序，并指定页首页尾
         sortChildren(this);
     }
 
