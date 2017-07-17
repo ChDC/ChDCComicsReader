@@ -55,6 +55,14 @@ public class File implements Serializable{
         return this.getFileImplement().delete(url, DELETE_FILE_PATTERN, false, true);
     }
 
+    public boolean isDirectory(){
+        return !(this instanceof Page);
+    }
+
+    public boolean isPage(){
+        return this instanceof Page;
+    }
+
     public boolean isCacheParent() {
         return cacheParent;
     }
@@ -155,7 +163,7 @@ public class File implements Serializable{
         if(children == null)
             return null;
         int i = children.indexOf(this);
-        if(i < 0) return null;
+        if(i < 0) return children.size() > 0 ? children.get(0) : null;
 
         int size = children.size();
         for(int ni = i + offset; ni >=0 && ni < size; ni += offset) {
@@ -215,7 +223,7 @@ public class File implements Serializable{
     }
 
     protected Page getEndPage(boolean reversed){
-        if(this instanceof Page)
+        if(this.isPage())
             return (Page)this;
 
         Visitor visitor = new Visitor() {
@@ -223,7 +231,9 @@ public class File implements Serializable{
             Page page;
             @Override
             public boolean visit(File file) {
-                if(file instanceof Page && file.isValid()) {
+                if(file == null)
+                    return true;
+                if(file.isPage() && file.isValid()) {
                     page = (Page)file;
                     if(reversed && page.getPageType() != Page.PageType.HeadEnd)
                         page.setPageType(Page.PageType.TailEnd);

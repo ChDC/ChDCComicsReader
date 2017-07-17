@@ -21,7 +21,7 @@ public class LocalFileImplement extends FileImplement {
 
     private static final String TAG = "LocalFileImplement";
 
-    private static final String DELETE_TAG = "_deleted";
+//    private static final String DELETE_TAG = "_deleted";
 
     public static final FileImplement INSTANCE = new LocalFileImplement();
 
@@ -46,7 +46,8 @@ public class LocalFileImplement extends FileImplement {
             for (File f : file.listFiles()){
                 if(f.isDirectory()){
                     String fName = f.getName();
-                    if(!fName.endsWith(DELETE_TAG) && (dirBlockFilter == null || !dirBlockFilter.matcher(fName).find()))
+//                    if(!fName.endsWith(DELETE_TAG) && (dirBlockFilter == null || !dirBlockFilter.matcher(fName).find()))
+                    if(dirBlockFilter == null || !dirBlockFilter.matcher(fName).find())
                         dirs.add(f.getPath());
                 }
                 else if (f.isFile()){
@@ -137,133 +138,190 @@ public class LocalFileImplement extends FileImplement {
             return !file.exists();
     }
 
-    private boolean deleteDirectory(String url, Pattern filter, boolean recursion, boolean deleteEmptyDirectory){
-        File file = new File(url);
-        if(!file.isDirectory())
-            return false;
-        url = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
-        File deleteFile = new File(url + DELETE_TAG);
+    private boolean deleteDirectory(File file, Pattern filter, boolean recursion, boolean deleteEmptyDirectory){
         if(recursion) {
             // 递归
-            boolean result = file.renameTo(deleteFile);
-            if (result)
-                new Thread(() -> {
-                    // 递归删除文件和目录
-                    // 后根遍历
-                    behindOrderTraverseFile(deleteFile, f -> {
-                        if(f.isDirectory()) {
-                            if (deleteEmptyDirectory)
-                                f.delete();
-                        }
-                        else if(filter.matcher(f.getName()).find())
-                            f.delete();
-                        return true;
-                    });
-                }).start();
-            return result;
-        }
-        else{
-            // 看文件成分
-            File[] children = file.listFiles();
-            boolean hasDirectory = false;
-            for(File f : children){
+            // 递归删除文件和目录
+            // 后根遍历
+            behindOrderTraverseFile(file, f -> {
                 if(f.isDirectory()) {
-                    hasDirectory = true;
-                    break;
-                }
-            }
-            if(hasDirectory){
-                // 直接删除
-                for(File f : children){
-                    if(f.isFile() && filter.matcher(f.getName()).find())
+                    if (deleteEmptyDirectory)
                         f.delete();
                 }
+                else if(filter.matcher(f.getName()).find())
+                    f.delete();
                 return true;
-            }
-            else{
-                // 只有文件，改名字删除
-                boolean result = file.renameTo(deleteFile);
-                if (result)
-                    new Thread(() -> {
-                        File[] fs = deleteFile.listFiles(f -> f.isFile() && filter.matcher(f.getName()).find());
-                        for(File f : fs)
-                            f.delete();
-                        if(deleteEmptyDirectory)
-                            deleteFile.delete(); // 如果不为空则删除失败
-                        // 将名字改回来
-                        deleteFile.renameTo(file);
-                    }).start();
-                return result;
-            }
+            });
+            return true;
         }
-    }
-
-
-    private boolean deleteDocumentDirectory(DocumentFile file, Pattern filter, boolean recursion, boolean deleteEmptyDirectory){
-        if(!file.isDirectory())
-            return false;
-        String originName = file.getName();
-        String deleteFile = originName + DELETE_TAG;
-        if(recursion) {
-            // 递归
-            boolean result = file.renameTo(deleteFile);
-            if (result)
-                new Thread(() -> {
-                    // 递归删除文件和目录
-                    // 后根遍历
-                    behindOrderTraverseDocumentFile(file, f -> {
-                        if(f.isDirectory()) {
-                            if (deleteEmptyDirectory && f.listFiles().length == 0)
-                                f.delete();
-                        }
-                        else if(filter.matcher(f.getName()).find())
-                            f.delete();
-                        return true;
-                    });
-                }).start();
+        else {
+            // 直接删除
+            File[] files = file.listFiles(f -> f.isFile() && filter.matcher(f.getName()).find());
+            boolean result = true;
+            for (File f : files)
+                if(!f.delete())
+                    result = false;
             return result;
         }
-        else{
-            // 看文件成分
-            DocumentFile[] children = file.listFiles();
-            boolean hasDirectory = false;
-            for(DocumentFile f : children){
+    }
+
+//    private boolean deleteDirectory(String url, Pattern filter, boolean recursion, boolean deleteEmptyDirectory){
+//        File file = new File(url);
+//        if(!file.isDirectory())
+//            return false;
+//        url = url.endsWith("/") ? url.substring(0, url.length() - 1) : url;
+//        File deleteFile = new File(url + DELETE_TAG);
+//        if(recursion) {
+//            // 递归
+//            boolean result = file.renameTo(deleteFile);
+//            if (result)
+//                new Thread(() -> {
+//                    // 递归删除文件和目录
+//                    // 后根遍历
+//                    behindOrderTraverseFile(deleteFile, f -> {
+//                        if(f.isDirectory()) {
+//                            if (deleteEmptyDirectory)
+//                                f.delete();
+//                        }
+//                        else if(filter.matcher(f.getName()).find())
+//                            f.delete();
+//                        return true;
+//                    });
+//                }).start();
+//            return result;
+//        }
+//        else{
+//            // 看文件成分
+//            File[] children = file.listFiles();
+//            boolean hasDirectory = false;
+//            for(File f : children){
+//                if(f.isDirectory()) {
+//                    hasDirectory = true;
+//                    break;
+//                }
+//            }
+//            if(hasDirectory){
+//                // 直接删除
+//                for(File f : children){
+//                    if(f.isFile() && filter.matcher(f.getName()).find())
+//                        f.delete();
+//                }
+//                return true;
+//            }
+//            else{
+//                // 只有文件，改名字删除
+//                boolean result = file.renameTo(deleteFile);
+//                if (result)
+//                    new Thread(() -> {
+//                        File[] fs = deleteFile.listFiles(f -> f.isFile() && filter.matcher(f.getName()).find());
+//                        for(File f : fs)
+//                            f.delete();
+//                        if(deleteEmptyDirectory)
+//                            deleteFile.delete(); // 如果不为空则删除失败
+//                        // 将名字改回来
+//                        deleteFile.renameTo(file);
+//                    }).start();
+//                return result;
+//            }
+//        }
+//    }
+
+    private boolean deleteDocumentDirectory(DocumentFile file, Pattern filter, boolean recursion, boolean deleteEmptyDirectory){
+        if(recursion) {
+            // 递归
+            // 递归删除文件和目录
+            // 后根遍历
+            behindOrderTraverseDocumentFile(file, f -> {
                 if(f.isDirectory()) {
-                    hasDirectory = true;
-                    break;
+                    if (deleteEmptyDirectory && f.listFiles().length == 0)
+                        f.delete();
                 }
+                else if(filter.matcher(f.getName()).find())
+                    f.delete();
+                return true;
+            });
+            return true;
+        }
+        else{
+            DocumentFile[] children = file.listFiles();
+            // 直接删除
+            boolean result = true;
+            for(DocumentFile f : children){
+                if(f.isFile() && filter.matcher(f.getName()).find())
+                    if(!f.delete())
+                        result = false;
             }
-            if(hasDirectory){
-                // 直接删除
-                boolean result = true;
-                for(DocumentFile f : children){
-                    if(f.isFile() && filter.matcher(f.getName()).find())
-                        if(!f.delete())
-                            result = false;
-                }
-                if(deleteEmptyDirectory && file.listFiles().length == 0)
-                    file.delete(); // 如果不为空则删除失败
-                return result;
-            }
-            else{
-                // 只有文件，改名字删除
-                boolean result = file.renameTo(deleteFile);
-                if (result)
-                    new Thread(() -> {
-                        DocumentFile[] fs = file.listFiles();
-                        for(DocumentFile f : fs)
-                            if(f.isFile() && filter.matcher(f.getName()).find())
-                                f.delete();
-                        if(deleteEmptyDirectory && file.listFiles().length == 0)
-                            file.delete();
-                        else
-                            // 将名字改回来
-                            file.renameTo(originName);
-                    }).start();
-                return result;
-            }
+            if(deleteEmptyDirectory && file.listFiles().length == 0)
+                file.delete(); // 如果不为空则删除失败
+            return result;
         }
     }
+
+//    private boolean deleteDocumentDirectory(DocumentFile file, Pattern filter, boolean recursion, boolean deleteEmptyDirectory){
+//        if(!file.isDirectory())
+//            return false;
+//        String originName = file.getName();
+//        String deleteFile = originName + DELETE_TAG;
+//        if(recursion) {
+//            // 递归
+//            boolean result = file.renameTo(deleteFile);
+//            if (result)
+//                new Thread(() -> {
+//                    // 递归删除文件和目录
+//                    // 后根遍历
+//                    behindOrderTraverseDocumentFile(file, f -> {
+//                        if(f.isDirectory()) {
+//                            if (deleteEmptyDirectory && f.listFiles().length == 0)
+//                                f.delete();
+//                        }
+//                        else if(filter.matcher(f.getName()).find())
+//                            f.delete();
+//                        return true;
+//                    });
+//                }).start();
+//            return result;
+//        }
+//        else{
+//            // 看文件成分
+//            DocumentFile[] children = file.listFiles();
+//            boolean hasDirectory = false;
+//            for(DocumentFile f : children){
+//                if(f.isDirectory()) {
+//                    hasDirectory = true;
+//                    break;
+//                }
+//            }
+//            if(hasDirectory){
+//                // 直接删除
+//                boolean result = true;
+//                for(DocumentFile f : children){
+//                    if(f.isFile() && filter.matcher(f.getName()).find())
+//                        if(!f.delete())
+//                            result = false;
+//                }
+//                if(deleteEmptyDirectory && file.listFiles().length == 0)
+//                    file.delete(); // 如果不为空则删除失败
+//                return result;
+//            }
+//            else{
+//                // 只有文件，改名字删除
+//                boolean result = file.renameTo(deleteFile);
+//                if (result)
+//                    new Thread(() -> {
+//                        DocumentFile[] fs = file.listFiles();
+//                        for(DocumentFile f : fs)
+//                            if(f.isFile() && filter.matcher(f.getName()).find())
+//                                f.delete();
+//                        if(deleteEmptyDirectory && file.listFiles().length == 0)
+//                            file.delete();
+//                        else
+//                            // 将名字改回来
+//                            file.renameTo(originName);
+//                    }).start();
+//                return result;
+//            }
+//        }
+//    }
 
     private boolean deleteDocumentFile(File url, Pattern filter, boolean recursion, boolean deleteEmptyDirectory){
         DocumentFile file = ViewHelper.INSTANCE.getDocumentFile(url, url.isDirectory());
@@ -277,7 +335,7 @@ public class LocalFileImplement extends FileImplement {
                 file.getParentFile().delete();
         }
         else if(file.isDirectory())
-            result = deleteDocumentDirectory( file, filter, recursion, deleteEmptyDirectory);
+            result = deleteDocumentDirectory(file, filter, recursion, deleteEmptyDirectory);
         return result;
     }
 
@@ -294,7 +352,7 @@ public class LocalFileImplement extends FileImplement {
                 if (deleteEmptyDirectory) // && isEmpty(file.getParent()))
                     new File(file.getParent()).delete();// 如果不为空则删除失败
             } else if (file.isDirectory())
-                result = deleteDirectory(url, filter, recursion, deleteEmptyDirectory);
+                result = deleteDirectory(file, filter, recursion, deleteEmptyDirectory);
             return result;
         }
         catch (Exception e){

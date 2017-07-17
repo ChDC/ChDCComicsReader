@@ -130,7 +130,7 @@ public class ArchiveBridgeFile extends File {
         List<Page> files = new ArrayList<>();
         List<File> dirs = new ArrayList<>();
         for(File f : file.children){
-            if(f instanceof Page) {
+            if(f.isPage()) {
                 Page p = (Page)f;
                 p.setPageType(Page.PageType.NotEnd);
                 files.add(p);

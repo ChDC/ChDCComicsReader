@@ -173,7 +173,22 @@ public class ViewComicsActivity extends AppCompatActivity {
             builder.setMessage(String.format(getString(R.string.msg_affirm_delete_chapter), title));
             builder.setPositiveButton(R.string.title_ok, (d, i) -> {
                 try{
-                    deleteChapter(currentFile);
+                    Page np = book.getNextChapterPage(currentFile);
+                    boolean skipLastChapter = true;
+                    if(np == null) {
+                        np = book.getLastChapterPage(currentFile);
+                        skipLastChapter = false;
+                    }
+                    if(np == null){
+                        deleteChapter(currentFile, false);
+                        finishForEmpty();
+                        return;
+                    }
+                    else{
+                        deleteChapter(currentFile, true);
+                    }
+                    // 加载下一章
+                    pagesViewAdapter.loadPage(np, skipLastChapter ? currentFile : null);
                 }
                 catch (Exception e){
                     e.printStackTrace();
@@ -186,27 +201,28 @@ public class ViewComicsActivity extends AppCompatActivity {
         });
     }
 
-    public void deleteChapter(File chapter){
+    public void deleteChapter(File chapter, boolean async){
 
-        Page np = book.getNextChapterPage(chapter);
-        if(np == null)
-            np = book.getLastChapterPage(chapter);
-
-        // 删除本章
-        boolean success = chapter instanceof Page ? chapter.getParent().delete() : chapter.delete();
-        if(!success){
+        Runnable requestDocumentPermission = () ->{
             ViewHelper.INSTANCE.showMessage(getString(R.string.msg_fail_to_delete));
             // 检查是否是外部存储卡，如果是就请求权限
             if(ViewHelper.INSTANCE.includeByExternalSDCard(chapter.getURL()))
                 ViewHelper.INSTANCE.requestDocumentPermission(this);
-            return;
+        };
+        if(async){
+            pool.submit(() -> {
+                boolean success = book.deleteChapter(chapter);
+                if(!success){
+                    handler.post(requestDocumentPermission);
+                }
+            });
         }
-        if(np == null){
-            finishForEmpty();
-            return;
+        else{
+            boolean success = book.deleteChapter(chapter);
+            if(!success){
+                requestDocumentPermission.run();
+            }
         }
-        // 加载下一章
-        pagesViewAdapter.loadPage(np);
     }
 
     public void handleIntent(Intent intent){

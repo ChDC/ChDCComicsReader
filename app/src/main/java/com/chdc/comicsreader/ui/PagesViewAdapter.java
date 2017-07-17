@@ -13,6 +13,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.chdc.comicsreader.R;
+import com.chdc.comicsreader.fs.File;
 import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
@@ -37,13 +38,13 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
     private ExecutorService pool;
 
     private Book book;
-    private Page startPage;
+//    private Page startPage;
 
     private SparseArray<Page> pageCache;
     private int cachePageNumber = 2; // 缓存两个图片
     private BlockingQueue<Page> loadBitmapQueue = new LinkedBlockingQueue<>(20);
 
-    private boolean isStartPageLoaded = false;
+//    private boolean isStartPageLoaded = false;
     private boolean isLockedForChangeBackEnd = false;
     private boolean isLockedForChangeFrontEnd = false;
 
@@ -112,17 +113,9 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
                     if(last != null)
                         page = book.getNextPage(last.getPage());
                     break;
-                case CURRENT:
-                    if(isStartPageLoaded){
-                        setBlankHolder(holder);
-                        return;
-                    }
-                    page = startPage;
-                    isStartPageLoaded = true;
-                    // 缓存 Pages
-                    Page np = page;
-                    pool.submit(() -> cachePages(np, position, Direction.LAST, cachePageNumber));
-                    break;
+//                case CURRENT:
+//                    page = null;
+//                    break;
             }
         }
         if(page == null){
@@ -244,34 +237,51 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
         if(position < 0)
             position = linearLayoutManager.findFirstVisibleItemPosition();
         if(position < 0)
-            return startPage;
+            return null;
         return pageCache.get(position);
     }
 
-    public boolean loadPage(Page page){
+    public boolean loadPage(Page page, File skipChapter){
         // clear
         this.clear();
         if(page != null)
             page.clear();
-        startPage = page;
+        Page startPage = page;
 
         this.setItemCount(Integer.MAX_VALUE);
+        int startPosition;
         if(startPage == null || !startPage.isValid()) {
             startPage = book.getHeadEndPage();
+            startPosition = 0;
         }
         else {
             this.owner.scrollToPosition(1000);
+            startPosition = 1000;
         }
 
         notifyDataSetChanged();
         if(startPage == null || !startPage.isValid())
             return false;
+
+        pageCache.put(startPosition, startPage);
+        Page finalStartPage = startPage;
+        pool.submit(() -> {
+            if(skipChapter != null && startPosition > 0){
+                Page lastPage = book.getTailPageOfLastChapter(skipChapter);
+                cachePages(lastPage, startPosition - 1, Direction.LAST, cachePageNumber);
+            }
+            else
+                cachePages(finalStartPage, startPosition, Direction.LAST, cachePageNumber);
+        });
         return true;
+    }
+
+    public boolean loadPage(Page page){
+        return loadPage(page, null);
     }
 
     public void clear(){
         clearCache();
-        isStartPageLoaded = false;
         isLockedForChangeBackEnd = false;
         isLockedForChangeFrontEnd = false;
         loadBitmapQueue.clear();
@@ -362,14 +372,6 @@ public class PagesViewAdapter extends RecyclerView.Adapter<PagesViewAdapter.Page
 
     public void setBook(Book book) {
         this.book = book;
-    }
-
-    public Page getStartPage() {
-        return startPage;
-    }
-
-    public void setStartPage(Page startPage) {
-        this.startPage = startPage;
     }
 
     public void setItemCount(int itemCount) {

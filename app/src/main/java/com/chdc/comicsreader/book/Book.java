@@ -1,5 +1,7 @@
 package com.chdc.comicsreader.book;
 
+import com.chdc.comicsreader.archive.ArchivePage;
+import com.chdc.comicsreader.fs.ArchiveBridgeFile;
 import com.chdc.comicsreader.fs.File;
 import com.chdc.comicsreader.fs.FileImplement;
 
@@ -32,14 +34,14 @@ public class Book extends File {
      * @param direction
      * @return
      */
-    protected Page getSiblingPage(File file, int direction, boolean willGetHeadEndPage){
+    protected Page getSiblingPage(File file, int direction){
         while(file != null && !Objects.equals(file.getURL(), this.url)){
             File sibling = file.getSibling(direction >= 0 ? 1 : -1 );
             if(sibling == null){
                 file = file.getParent();
             }
             else {
-                Page page = willGetHeadEndPage ? sibling.getHeadEndPage() : sibling.getTailEndPage();
+                Page page = direction >= 0 ? sibling.getHeadEndPage() : sibling.getTailEndPage();
                 if(page != null)
                     return page;
                 else
@@ -50,46 +52,55 @@ public class Book extends File {
     }
 
     public Page getNextPage(Page page){
-        return this.getSiblingPage(page, 1, true);
+        return this.getSiblingPage(page, 1);
     }
 
     public Page getLastPage(Page page){
-        return this.getSiblingPage(page, -1, false);
+        return this.getSiblingPage(page, -1);
     }
 
     public Page getNextChapterPage(File page){
-        if(page instanceof Page) {
+        if(page.isPage()) {
             // 考虑目录中既有文件又有目录的情况
             List<File> childrenOfParent = page.getParent().getChildren();
-            int i = -1;
-            for (File file : childrenOfParent) {
-                if (!(file instanceof Page))
-                    break;
-                i++;
+            int i;
+            for(i = childrenOfParent.size() - 1; i >= 0 && childrenOfParent.get(i).isDirectory(); i--) {
+
             }
-            return this.getSiblingPage(childrenOfParent.get(i), 1, true);
+            return this.getSiblingPage(childrenOfParent.get(i), 1);
         }
         else{
             // 目录
-            return this.getSiblingPage(page, 1, true);
+            return this.getSiblingPage(page, 1);
         }
     }
 
+    public Page getTailPageOfLastChapter(File page){
+        File file = page.isPage() ? page.getParent() : page;
+        return this.getSiblingPage(file, -1);
+    }
+
     public Page getLastChapterPage(File page){
-        // 考虑目录中既有文件又有目录的情况
-        Page p = this.getSiblingPage(page.getParent(), -1, false);
-        if(p == null)
-            return null;
-        // 如果有后继表明不是最后一个
-        Page fp = (Page)p.getParent().getChildren().get(0);
-        if(!fp.equals(p) && fp.isValid())
-            return fp;
-        else
-            return p;
+        File file = page.isPage() ? page.getParent() : page;
+        Page p = this.getSiblingPage(file, -1);
+        return (Page)p.getParent().getChildren().get(0);
     }
 
     @Override
     public File getParent() {
         return null;
     }
+
+    public boolean deleteChapter(File file){
+        if(file instanceof ArchiveBridgeFile)
+            return file.delete();
+        else if(file instanceof ArchivePage){
+            return ((ArchivePage)file).getArchiveBridgeFile().delete();
+        }
+        else if(file.isPage()){
+            return file.getParent().delete();
+        }
+        return false;
+    }
+
 }

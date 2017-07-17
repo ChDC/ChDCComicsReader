@@ -30,7 +30,7 @@ public class Page extends File{
                 return PageType.Unknown;
             if(i == 0)
                 pageType = PageType.HeadEnd;
-            else if (i + 1 < childrenOfParent.size() && !(childrenOfParent.get(i+1) instanceof Page))
+            else if (i + 1 < childrenOfParent.size() && childrenOfParent.get(i+1).isDirectory())
                 pageType = PageType.TailEnd;
             else
                 pageType = PageType.NotEnd;
@@ -90,7 +90,7 @@ public class Page extends File{
         try (InputStream is = this.getInputStream()) {
             bitmap = ViewHelper.INSTANCE.decodeBitmapFromStream(is, options);
             return;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             bitmap = null;
             e.printStackTrace();
             return;
