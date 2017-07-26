@@ -1,7 +1,6 @@
 package com.chdc.comicsreader.fs;
 
 import java.io.InputStream;
-import java.util.List;
 import java.util.regex.Pattern;
 
 /**

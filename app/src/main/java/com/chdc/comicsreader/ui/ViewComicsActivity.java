@@ -3,10 +3,10 @@ package com.chdc.comicsreader.ui;
 import android.content.Intent;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
+import android.os.Bundle;
 import android.os.Handler;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
@@ -14,14 +14,13 @@ import android.view.View;
 import android.widget.EditText;
 
 import com.chdc.comicsreader.R;
-import com.chdc.comicsreader.archive.ArchiveFile;
 import com.chdc.comicsreader.archive.ArchivePage;
+import com.chdc.comicsreader.book.Book;
+import com.chdc.comicsreader.book.Page;
 import com.chdc.comicsreader.fs.ArchiveBridgeFile;
 import com.chdc.comicsreader.fs.File;
 import com.chdc.comicsreader.utils.RecyclerItemClickListener;
 import com.chdc.comicsreader.utils.ViewHelper;
-import com.chdc.comicsreader.book.Book;
-import com.chdc.comicsreader.book.Page;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;

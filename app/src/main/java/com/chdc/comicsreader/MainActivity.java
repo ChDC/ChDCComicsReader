@@ -9,7 +9,6 @@ import android.view.MenuItem;
 import android.widget.TextView;
 
 import com.chdc.comicsreader.book.Book;
-import com.chdc.comicsreader.book.Page;
 import com.chdc.comicsreader.ui.ViewComicsActivity;
 
 

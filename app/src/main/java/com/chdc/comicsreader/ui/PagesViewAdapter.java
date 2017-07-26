@@ -13,10 +13,10 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.chdc.comicsreader.R;
-import com.chdc.comicsreader.fs.File;
-import com.chdc.comicsreader.utils.ViewHelper;
 import com.chdc.comicsreader.book.Book;
 import com.chdc.comicsreader.book.Page;
+import com.chdc.comicsreader.fs.File;
+import com.chdc.comicsreader.utils.ViewHelper;
 
 import java.util.ArrayList;
 import java.util.Collections;

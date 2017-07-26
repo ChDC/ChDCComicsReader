@@ -4,10 +4,10 @@ import android.support.v4.provider.DocumentFile;
 
 import com.chdc.comicsreader.utils.ViewHelper;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.InputStream;
-import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
